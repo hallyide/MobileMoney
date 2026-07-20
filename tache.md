@@ -82,6 +82,6 @@
 ## Progression
 
 - **Total des tâches :** 18
-- **Terminées :** 0 / 18
+- **Terminées :** 1 / 18
 - **En cours :** 0
-- **Restantes :** 18
+- **Restantes :** 17
