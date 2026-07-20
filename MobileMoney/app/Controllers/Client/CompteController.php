@@ -19,7 +19,6 @@ class CompteController extends BaseController
         }
 
         $mouvementModel = new MouvementCompteModel();
-
         return view('client/dashboard', [
             'titre' => 'Mon compte',
             'section' => 'compte',
@@ -56,8 +55,7 @@ class CompteController extends BaseController
                 (int) $compte['id'],
                 (float) $this->request->getPost('montant')
             );
-            $message = 'Dépôt effectué avec succès. Frais : ' . number_format($frais, 0, ',', ' ') . ' Ar.';
-
+            $message = 'Dépôt effectué. Frais : ' . number_format($frais, 2, ',', ' ') . ' Ar.';
             return redirect()->to('/client')->with('succes', $message);
         } catch (DomainException $exception) {
             return redirect()->back()->withInput()->with('erreur', $exception->getMessage());
@@ -75,8 +73,41 @@ class CompteController extends BaseController
             'titre' => 'Faire un transfert',
             'section' => 'transfert',
             'compte' => $compte,
-            'baremes' => $this->baremesPour('transfert'),
         ]);
+    }
+
+    public function transfertApercu(): string|RedirectResponse
+    {
+        $compte = $this->compteConnecte();
+        if ($compte instanceof RedirectResponse) {
+            return $compte;
+        }
+
+        $numeros = $this->request->getPost('numeros');
+        $numeros = is_array($numeros) ? $numeros : [];
+        $montant = (float) $this->request->getPost('montant');
+        $inclureRetrait = $this->request->getPost('inclure_frais_retrait') === '1';
+
+        try {
+            $resume = (new TransactionService())->preparerTransfert(
+                (int) $compte['id'],
+                $numeros,
+                $montant,
+                $inclureRetrait
+            );
+
+            return view('client/transfert-apercu', [
+                'titre' => 'Vérifier le transfert',
+                'section' => 'transfert',
+                'compte' => $compte,
+                'resume' => $resume,
+                'numeros' => $numeros,
+            ]);
+        } catch (DomainException $exception) {
+            return redirect()->to('/client/transfert')
+                ->withInput()
+                ->with('erreur', $exception->getMessage());
+        }
     }
 
     public function transfert(): RedirectResponse
@@ -86,21 +117,25 @@ class CompteController extends BaseController
             return $compte;
         }
 
+        $numeros = $this->request->getPost('numeros');
+        $numeros = is_array($numeros) ? $numeros : [];
+
         try {
-            $frais = (new TransactionService())->transferer(
+            $resume = (new TransactionService())->transfererMultiple(
                 (int) $compte['id'],
-                (string) $this->request->getPost('numero'),
-                (float) $this->request->getPost('montant')
+                $numeros,
+                (float) $this->request->getPost('montant'),
+                $this->request->getPost('inclure_frais_retrait') === '1'
             );
-            $message = 'Transfert effectué. Frais : ' . number_format($frais, 0, ',', ' ') . ' Ar.';
+            $message = count($resume['destinataires']) . ' transfert(s) effectué(s). Total débité : '
+                . number_format($resume['totalDebite'], 2, ',', ' ') . ' Ar.';
 
             return redirect()->to('/client')->with('succes', $message);
         } catch (DomainException $exception) {
-            return redirect()->back()->withInput()->with('erreur', $exception->getMessage());
+            return redirect()->to('/client/transfert')->withInput()->with('erreur', $exception->getMessage());
         }
     }
 
-    /** Retourne le compte de la session ou redirige vers la connexion. */
     private function compteConnecte(): array|RedirectResponse
     {
         $id = session()->get('client_id');
@@ -114,7 +149,6 @@ class CompteController extends BaseController
         return $compte;
     }
 
-    /** Retourne le barème utilisé pour la petite estimation visuelle. */
     private function baremesPour(string $operation): array
     {
         return db_connect()->table('baremeFrais')

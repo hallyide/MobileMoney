@@ -1,4 +1,4 @@
-# Mobile Money — Version 1
+# Mobile Money — Version 2
 
 Application CodeIgniter 4 utilisant une base SQLite embarquée.
 
@@ -17,6 +17,17 @@ Ouvrir ensuite `http://localhost:8080`.
 
 Un numéro client valide doit contenir dix chiffres et commencer par un préfixe
 configuré. Lors de sa première connexion, son compte est créé automatiquement.
+
+La version 2 ajoute la gestion des opérateurs externes, de leurs préfixes et de
+leurs commissions. Un client peut envoyer un montant vers plusieurs numéros du
+même opérateur. Pour un opérateur externe, la commission est facturée à
+l'envoyeur sans réduire le montant à reverser. Aucun compte externe n'est créé.
+
+Pages opérateur ajoutées :
+
+- `/admin/operateurs` : opérateurs externes, préfixes et commissions ;
+- `/admin/versements` : montants à reverser, détails et filtres ;
+- `/admin/gains` : séparation des frais habituels et commissions externes.
 
 ## Base de données
 

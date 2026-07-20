@@ -41,6 +41,7 @@ CREATE TABLE mvmtCompte (
     date DATE NOT NULL DEFAULT CURRENT_DATE,
     idType INTEGER NOT NULL,
     indTypeOp INTEGER NOT NULL,
+    numeroDestinataire TEXT NULL,
 
     FOREIGN KEY (idCompte)
         REFERENCES compte(id),
@@ -69,6 +70,49 @@ CREATE TABLE FraisMvmt (
 
     FOREIGN KEY (typeOp)
         REFERENCES typeOperation(id)
+);
+
+-- Données propres aux transferts vers les autres opérateurs.
+CREATE TABLE operateurExterne (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nom TEXT NOT NULL UNIQUE
+);
+
+CREATE TABLE prefixeOperateur (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    idOperateur INTEGER NOT NULL,
+    prefixe TEXT NOT NULL UNIQUE CHECK (length(prefixe) = 3),
+
+    FOREIGN KEY (idOperateur)
+        REFERENCES operateurExterne(id) ON DELETE RESTRICT
+);
+
+CREATE TABLE commissionOperateur (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    idOperateur INTEGER NOT NULL UNIQUE,
+    pourcentage REAL NOT NULL DEFAULT 0 CHECK (pourcentage >= 0 AND pourcentage <= 100),
+
+    FOREIGN KEY (idOperateur)
+        REFERENCES operateurExterne(id) ON DELETE RESTRICT
+);
+
+CREATE TABLE transfertExterne (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    idMouvement INTEGER NOT NULL UNIQUE,
+    idCompteEnvoyeur INTEGER NOT NULL,
+    idOperateur INTEGER NOT NULL,
+    numeroDestinataire TEXT NOT NULL,
+    montantEnvoye REAL NOT NULL CHECK (montantEnvoye > 0),
+    commission REAL NOT NULL DEFAULT 0 CHECK (commission >= 0),
+    montantAReverser REAL NOT NULL CHECK (montantAReverser >= 0),
+    date DATE NOT NULL DEFAULT CURRENT_DATE,
+
+    FOREIGN KEY (idMouvement)
+        REFERENCES mvmtCompte(id),
+    FOREIGN KEY (idCompteEnvoyeur)
+        REFERENCES compte(id),
+    FOREIGN KEY (idOperateur)
+        REFERENCES operateurExterne(id) ON DELETE RESTRICT
 );
 
 -- ==================================================================
@@ -122,6 +166,22 @@ INSERT OR IGNORE INTO compte (numero, soldeActuel) VALUES
 
 INSERT OR IGNORE INTO caisseOp (id, gains) VALUES (1, 0);
 
+INSERT OR IGNORE INTO operateurExterne (nom) VALUES
+    ('Operateur 031'),
+    ('Operateur 035');
+
+INSERT OR IGNORE INTO prefixeOperateur (idOperateur, prefixe)
+SELECT id, '031' FROM operateurExterne WHERE nom = 'Operateur 031';
+
+INSERT OR IGNORE INTO prefixeOperateur (idOperateur, prefixe)
+SELECT id, '035' FROM operateurExterne WHERE nom = 'Operateur 035';
+
+INSERT OR IGNORE INTO commissionOperateur (idOperateur, pourcentage)
+SELECT id, 5 FROM operateurExterne WHERE nom = 'Operateur 031';
+
+INSERT OR IGNORE INTO commissionOperateur (idOperateur, pourcentage)
+SELECT id, 4 FROM operateurExterne WHERE nom = 'Operateur 035';
+
 -- Un mouvement initial explique le solde de chaque compte de test.
 INSERT INTO mvmtCompte (idCompte, valeur, idType, indTypeOp)
 SELECT c.id, c.soldeActuel, tm.id, op.id
@@ -165,6 +225,7 @@ WHERE NOT EXISTS (
 --   - Date date;
 --   - int idType; (debit(entree) ou credit(sortie))
 --   - int indTypeOp;
+--   - VARCHAR numeroDestinataire; (NULL pour un depot)
 
 -- caisseOp :
 --   - int id;
