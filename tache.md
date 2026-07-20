@@ -67,7 +67,7 @@
 - [ ] Déploiement / Livraison finale
 
 ### ETU4269
-- [ ] Intégration du template
+- [x] Intégration du template
 - [x] Création de la base de données
 - [x] Création des tables
 - [ ] Gestion du barème des frais
@@ -82,6 +82,6 @@
 ## Progression
 
 - **Total des tâches :** 18
-- **Terminées :** 3 / 18
+- **Terminées :** 4 / 18
 - **En cours :** 0
 - **Restantes :** 17
