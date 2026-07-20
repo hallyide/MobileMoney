@@ -1,5 +1,7 @@
 # Tâches — Projet Mobile Money
 
+☑ ☐
+
 ## 1. Initialisation et préparation
 
 | Statut | Tâche | Responsable |
@@ -54,7 +56,7 @@
 - [x] Affichage du solde
 - [x] Dépôt
 - [x] Transfert
-- [ ] Tag Git v1 après validation
+- [x] Tag Git v1 après validation
 - [ ] Livraison finale après validation
 
 ### ETU4269
