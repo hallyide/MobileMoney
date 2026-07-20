@@ -1,3 +1,34 @@
+# Mobile Money — Version 1
+
+Projet CodeIgniter 4 avec une base SQLite embarquee.
+
+## Demarrage rapide
+
+La base de demonstration se trouve dans `writable/mobile_money.db` et contient deja
+les donnees de test. Depuis ce dossier, lancer :
+
+```bash
+php spark serve
+```
+
+Puis ouvrir `http://localhost:8080`. La page d'accueil affiche les comptes clients.
+Les ecrans de gestion des prefixes sont accessibles sur `/admin/prefixes`.
+
+Le script complet de creation et de donnees est le fichier `../mm.sql`. Le seeder
+CodeIgniter peut etre rejoue sans creer de doublons :
+
+```bash
+php spark db:seed MobileMoneySeeder
+```
+
+## Integration avec le module de connexion
+
+En attendant le module de connexion automatique, un espace client est accessible
+avec `/client/{idCompte}`. A l'integration, l'identifiant devra venir de la session.
+Les depots et transferts sont centralises dans `app/Services/TransactionService.php`.
+
+---
+
 # CodeIgniter 4 Application Starter
 
 ## What is CodeIgniter?

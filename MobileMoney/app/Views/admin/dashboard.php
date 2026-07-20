@@ -1,133 +1,103 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard — Opérateur</title>
-<link rel="stylesheet" href="../css/style.css">
-</head>
-<body class="ink">
+<?= $this->extend('layouts/admin') ?>
+<?= $this->section('contenu') ?>
 
-  <header class="topbar">
-    <div class="topbar-inner">
-      <a class="brand" href="admin/dashboard"><span class="brand-mark">MM</span>Mobile Money<small>Espace opérateur</small></a>
-      <nav class="nav-flow">
-        <a href="/admin/dashboard" class="active">Dashboard</a>
-        <a href="/api/bareme">Barème des frais</a>
-        <a href="/api/historique/(:segment)">Historique gains</a>
-        <a href="comptes.html">Comptes clients</a>
-        <span class="nav-sep"></span>
-        <a href="../index.html" class="btn-logout">Déconnexion</a>
-      </nav>
+<div class="page-head">
+    <div>
+        <p class="eyebrow">Configuration réseau</p>
+        <h1>Préfixes téléphoniques</h1>
+        <p>Gérez les préfixes autorisés pour les comptes Mobile Money.</p>
     </div>
-  </header>
+    <button class="btn btn-primary" type="button" data-open-modal="modalAddPrefix">+ Ajouter un préfixe</button>
+</div>
 
-  <main class="app-shell app-shell--wide" id="page-admin-dashboard">
-
-    <div class="page-head">
-      <div>
-        <p class="eyebrow">Vue d'ensemble</p>
-        <h1>Tableau de bord</h1>
-        <p>Suivi des gains, des clients et de l'activité du réseau.</p>
-      </div>
-    </div>
-
-    <div class="grid grid-3" style="margin-bottom:16px;">
-      <div class="card kpi">
-        <div class="k-label">Valeur des gains</div>
-        <div class="k-value gold" id="kpiGains">0 Ar</div>
-        <div class="k-foot">Cumul des frais perçus (caisseOp)</div>
-      </div>
-      <div class="card kpi">
-        <div class="k-label">Nombre de clients</div>
-        <div class="k-value" id="kpiClients">0</div>
-        <div class="k-foot">Comptes actifs sur la plateforme</div>
-      </div>
-      <div class="card kpi">
+<div class="grid grid-3" style="margin-bottom:16px;">
+    <div class="card kpi">
         <div class="k-label">Préfixes disponibles</div>
-        <div class="k-value" id="kpiPrefixes">0</div>
-        <div class="k-foot">Préfixes autorisés à l'ouverture de compte</div>
-      </div>
+        <div class="k-value gold"><?= count($prefixes) ?></div>
+        <div class="k-foot">Préfixes actuellement autorisés</div>
     </div>
+</div>
 
-    <div class="card" style="margin-bottom:16px;">
-      <div class="card-head">
+<div class="card">
+    <div class="card-head">
         <div>
-          <h2>Statistiques des transactions</h2>
-          <div class="hint">Volume total mouvementé sur la période</div>
+            <h2>Préfixes disponibles</h2>
+            <div class="hint">Format attendu : trois chiffres, par exemple 033</div>
         </div>
-        <div class="chart-toolbar seg" id="chartToolbar">
-          <button data-period="jour" class="active">Jour</button>
-          <button data-period="semaine">Semaine</button>
-          <button data-period="mois">Mois</button>
-          <button data-period="annee">Année</button>
-        </div>
-      </div>
-      <div class="chart-legend"><span><i></i> Volume des transactions</span></div>
-      <div class="chart-box">
-        <canvas id="statsChart" style="width:100%; height:220px;"></canvas>
-      </div>
     </div>
-
-    <div class="card">
-      <div class="card-head">
-        <div>
-          <h2>Préfixes disponibles</h2>
-          <div class="hint">Préfixes de numéro acceptés pour la création de comptes</div>
-        </div>
-        <button class="btn btn-primary btn-sm" data-open-modal="modalAddPrefix">+ Ajouter</button>
-      </div>
-      <div class="table-wrap">
+    <div class="table-wrap">
         <table class="tbl">
-          <thead><tr><th>Préfixe</th><th style="text-align:right;">Actions</th></tr></thead>
-          <tbody id="prefixTableBody"></tbody>
+            <thead><tr><th>Préfixe</th><th style="text-align:right;">Actions</th></tr></thead>
+            <tbody>
+            <?php foreach ($prefixes as $prefixe): ?>
+                <tr>
+                    <td class="td-mono"><?= esc($prefixe['prefixe']) ?></td>
+                    <td>
+                        <div class="row-actions">
+                            <button class="btn btn-sm btn-ghost" type="button"
+                                    data-open-modal="modalEditPrefix<?= $prefixe['id'] ?>">Modifier</button>
+                            <form method="post" action="<?= site_url('admin/prefixes/' . $prefixe['id'] . '/supprimer') ?>"
+                                  onsubmit="return confirm('Supprimer ce préfixe ?')">
+                                <button class="btn btn-sm btn-danger" type="submit">Supprimer</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+            <?php if ($prefixes === []): ?>
+                <tr><td colspan="2"><div class="empty-state">Aucun préfixe configuré.</div></td></tr>
+            <?php endif; ?>
+            </tbody>
         </table>
-      </div>
     </div>
+</div>
 
-  </main>
-
-  <p class="footer-note">Mobile Money · Espace opérateur</p>
-
-  <!-- Modale ajout préfixe -->
-  <div class="modal-overlay" id="modalAddPrefix">
-    <div class="modal">
-      <div class="modal-head"><h3>Ajouter un préfixe</h3><button class="modal-close" data-close-modal>×</button></div>
-      <form id="formAddPrefix">
-        <div class="modal-body">
-          <div class="field">
-            <label for="addPrefixValue">Préfixe</label>
-            <input class="input input-mono" id="addPrefixValue" name="prefixe" placeholder="ex : 034" maxlength="4" required>
-          </div>
+<div class="modal-overlay" id="modalAddPrefix">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="titre-ajout-prefixe">
+        <div class="modal-head">
+            <h3 id="titre-ajout-prefixe">Ajouter un préfixe</h3>
+            <button class="modal-close" type="button" data-close-modal aria-label="Fermer">×</button>
         </div>
-        <div class="modal-foot">
-          <button type="button" class="btn" data-close-modal>Annuler</button>
-          <button type="submit" class="btn btn-primary">Ajouter</button>
-        </div>
-      </form>
+        <form method="post" action="<?= site_url('admin/prefixes') ?>">
+            <div class="modal-body">
+                <div class="field">
+                    <label for="addPrefixValue">Préfixe</label>
+                    <input class="input input-mono" id="addPrefixValue" name="prefixe"
+                           value="<?= esc(old('prefixe')) ?>" placeholder="ex : 033"
+                           maxlength="3" pattern="[0-9]{3}" required>
+                    <span class="hint-sm">Le préfixe doit contenir exactement trois chiffres.</span>
+                </div>
+            </div>
+            <div class="modal-foot">
+                <button type="button" class="btn" data-close-modal>Annuler</button>
+                <button type="submit" class="btn btn-primary">Ajouter</button>
+            </div>
+        </form>
     </div>
-  </div>
+</div>
 
-  <!-- Modale modification préfixe -->
-  <div class="modal-overlay" id="modalEditPrefix">
-    <div class="modal">
-      <div class="modal-head"><h3>Modifier le préfixe</h3><button class="modal-close" data-close-modal>×</button></div>
-      <form id="formEditPrefix">
-        <input type="hidden" id="editPrefixId">
-        <div class="modal-body">
-          <div class="field">
-            <label for="editPrefixValue">Préfixe</label>
-            <input class="input input-mono" id="editPrefixValue" maxlength="4" required>
-          </div>
+<?php foreach ($prefixes as $prefixe): ?>
+    <div class="modal-overlay" id="modalEditPrefix<?= $prefixe['id'] ?>">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="titre-modif-prefixe-<?= $prefixe['id'] ?>">
+            <div class="modal-head">
+                <h3 id="titre-modif-prefixe-<?= $prefixe['id'] ?>">Modifier le préfixe</h3>
+                <button class="modal-close" type="button" data-close-modal aria-label="Fermer">×</button>
+            </div>
+            <form method="post" action="<?= site_url('admin/prefixes/' . $prefixe['id']) ?>">
+                <div class="modal-body">
+                    <div class="field">
+                        <label for="prefixe-<?= $prefixe['id'] ?>">Préfixe</label>
+                        <input class="input input-mono" id="prefixe-<?= $prefixe['id'] ?>" name="prefixe"
+                               value="<?= esc($prefixe['prefixe']) ?>" maxlength="3" pattern="[0-9]{3}" required>
+                    </div>
+                </div>
+                <div class="modal-foot">
+                    <button type="button" class="btn" data-close-modal>Annuler</button>
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                </div>
+            </form>
         </div>
-        <div class="modal-foot">
-          <button type="button" class="btn" data-close-modal>Annuler</button>
-          <button type="submit" class="btn btn-primary">Enregistrer</button>
-        </div>
-      </form>
     </div>
-  </div>
+<?php endforeach; ?>
 
-  <script src="../js/script.js"></script>
-</body>
-</html>
+<?= $this->endSection() ?>
