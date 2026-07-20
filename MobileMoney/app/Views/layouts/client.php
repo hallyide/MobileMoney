@@ -9,19 +9,23 @@
 <body class="theme-client">
 <header class="topbar">
     <div class="topbar-inner">
-        <a class="brand" href="<?= site_url('client/' . $compte['id']) ?>">
+        <a class="brand" href="<?= site_url('client') ?>">
             <span class="brand-mark">MM</span>
             <span>Mobile Money<small>Espace client</small></span>
         </a>
         <nav class="nav-flow" aria-label="Navigation client">
-            <a href="<?= site_url('client/' . $compte['id']) ?>"
+            <a href="<?= site_url('client') ?>"
                class="<?= ($section ?? '') === 'compte' ? 'active' : '' ?>">Mon compte</a>
-            <a href="<?= site_url('client/' . $compte['id'] . '/depot') ?>"
+            <a href="<?= site_url('client/depot') ?>"
                class="<?= ($section ?? '') === 'depot' ? 'active' : '' ?>">Dépôt</a>
-            <a href="<?= site_url('client/' . $compte['id'] . '/transfert') ?>"
+            <a href="<?= site_url('client/retrait') ?>"
+               class="<?= ($section ?? '') === 'retrait' ? 'active' : '' ?>">Retrait</a>
+            <a href="<?= site_url('client/transfert') ?>"
                class="<?= ($section ?? '') === 'transfert' ? 'active' : '' ?>">Transfert</a>
+            <a href="<?= site_url('client/historique') ?>"
+               class="<?= ($section ?? '') === 'historique' ? 'active' : '' ?>">Historique</a>
             <span class="nav-sep"></span>
-            <a href="<?= site_url('admin/comptes') ?>" class="btn-logout">Changer de compte</a>
+            <a href="<?= site_url('client/logout') ?>" class="btn-logout">Déconnexion</a>
         </nav>
     </div>
 </header>

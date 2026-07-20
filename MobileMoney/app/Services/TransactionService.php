@@ -21,9 +21,8 @@ class TransactionService
     /**
      * Ajoute un depot et met a jour le solde dans une seule transaction.
      *
-     * Le sujet ne prevoit pas de frais de depot par defaut. Cependant, si
-     * l'operateur ajoute plus tard un bareme pour le depot, il sera applique
-     * automatiquement et le compte recevra le montant net.
+     * Le barème du dépôt est actuellement configuré à zéro. Le compte reçoit
+     * le montant net afin que le code reste correct si ce barème évolue.
      */
     public function deposer(int $compteId, float $montant): float
     {
@@ -31,7 +30,7 @@ class TransactionService
         $compte = $this->trouverCompte($compteId);
         $typeEntreeId = $this->idTypeMouvement('debit');
         $depotId = $this->idOperation('depot');
-        $frais = $this->calculerFraisOptionnels($depotId, $montant);
+        $frais = $this->calculerFrais($depotId, $montant);
         $montantNet = $montant - $frais;
 
         if ($montantNet <= 0) {
@@ -127,6 +126,43 @@ class TransactionService
         return $frais;
     }
 
+    /** Retire le montant et les frais du compte dans une transaction unique. */
+    public function retirer(int $compteId, float $montant): float
+    {
+        $montant = $this->montantValide($montant);
+        $compte = $this->trouverCompte($compteId);
+        $operationId = $this->idOperation('retrait');
+        $typeSortieId = $this->idTypeMouvement('credit');
+        $frais = $this->calculerFrais($operationId, $montant);
+        $total = $montant + $frais;
+
+        if ((float) $compte['soldeActuel'] < $total) {
+            throw new DomainException('Solde insuffisant pour couvrir le retrait et les frais.');
+        }
+
+        $this->db->transStart();
+
+        $this->db->table('compte')->where('id', $compteId)->update([
+            'soldeActuel' => round((float) $compte['soldeActuel'] - $total, 2),
+        ]);
+
+        // La valeur correspond à la diminution réelle du solde : montant + frais.
+        $this->db->table('mvmtCompte')->insert([
+            'idCompte' => $compteId,
+            'valeur' => $total,
+            'idType' => $typeSortieId,
+            'indTypeOp' => $operationId,
+        ]);
+        $mouvementId = (int) $this->db->insertID();
+
+        $this->enregistrerFrais($mouvementId, $operationId, $frais);
+
+        $this->db->transComplete();
+        $this->verifierTransaction();
+
+        return $frais;
+    }
+
     private function montantValide(float $montant): float
     {
         if (! is_finite($montant) || $montant <= 0) {
@@ -182,18 +218,6 @@ class TransactionService
         }
 
         return (float) $bareme['prix'];
-    }
-
-    /** Retourne zero lorsqu'aucun frais n'est configure pour l'operation. */
-    private function calculerFraisOptionnels(int $operationId, float $montant): float
-    {
-        $bareme = $this->db->table('baremeFrais')
-            ->where('idtypeOp', $operationId)
-            ->where('montant_min <=', $montant)
-            ->where('montant_max >=', $montant)
-            ->get()->getRowArray();
-
-        return $bareme === null ? 0.0 : (float) $bareme['prix'];
     }
 
     /** Enregistre le detail des frais et les ajoute aux gains operateur. */

@@ -10,10 +10,15 @@ class PrefixeController extends BaseController
 {
     public function index(): string
     {
+        $db = db_connect();
+        $caisse = $db->table('caisseOp')->where('id', 1)->get()->getRowArray();
+
         return view('admin/dashboard', [
-            'titre' => 'Configuration des prefixes',
+            'titre' => 'Tableau de bord opérateur',
             'section' => 'prefixes',
             'prefixes' => (new PrefixeModel())->orderBy('prefixe')->findAll(),
+            'nombreClients' => $db->table('compte')->countAllResults(),
+            'gains' => (float) ($caisse['gains'] ?? 0),
         ]);
     }
 

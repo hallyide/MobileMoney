@@ -1,26 +1,27 @@
 <?php
+
 namespace App\Controllers;
 
-use CodeIgniter\RESTful\ResourceController;
+use App\Models\CompteModel;
+use App\Models\MouvementCompteModel;
+use CodeIgniter\HTTP\RedirectResponse;
 
-class HistoriqueController extends ResourceController
+class HistoriqueController extends BaseController
 {
-    protected $format = 'json';
-
-    public function index($numero = null)
+    public function index(): string|RedirectResponse
     {
-        $compte = model('CompteModel')->where('numero', $numero)->first();
-        if (!$compte) return $this->failNotFound('Compte introuvable.');
+        $id = session()->get('client_id');
+        $compte = $id ? (new CompteModel())->find((int) $id) : null;
 
-        $db = \Config\Database::connect();
-        $rows = $db->table('mvmtCompte m')
-            ->select('m.id, m.valeur, m.date, m.idType, m.indTypeOp, t.type as type_op, tm.type as type_mvmt')
-            ->join('typeOperation t', 't.id = m.indTypeOp')
-            ->join('typeMvmtComp tm', 'tm.id = m.idType')
-            ->where('m.idCompte', $compte['id'])
-            ->orderBy('m.id', 'DESC')
-            ->get()->getResultArray();
+        if ($compte === null) {
+            return redirect()->to('/client/login')->with('erreur', 'Veuillez vous connecter.');
+        }
 
-        return $this->respond($rows);
+        return view('client/historique', [
+            'titre' => 'Historique des transactions',
+            'section' => 'historique',
+            'compte' => $compte,
+            'mouvements' => (new MouvementCompteModel())->forAccount((int) $compte['id']),
+        ]);
     }
 }

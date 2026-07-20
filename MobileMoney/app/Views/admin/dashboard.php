@@ -3,14 +3,24 @@
 
 <div class="page-head">
     <div>
-        <p class="eyebrow">Configuration réseau</p>
-        <h1>Préfixes téléphoniques</h1>
-        <p>Gérez les préfixes autorisés pour les comptes Mobile Money.</p>
+        <p class="eyebrow">Vue d’ensemble</p>
+        <h1>Tableau de bord</h1>
+        <p>Suivez les clients, les gains et les préfixes autorisés.</p>
     </div>
     <button class="btn btn-primary" type="button" data-open-modal="modalAddPrefix">+ Ajouter un préfixe</button>
 </div>
 
 <div class="grid grid-3" style="margin-bottom:16px;">
+    <div class="card kpi">
+        <div class="k-label">Gains de l’opérateur</div>
+        <div class="k-value gold"><?= number_format($gains, 0, ',', ' ') ?> Ar</div>
+        <div class="k-foot">Frais de retrait et de transfert encaissés</div>
+    </div>
+    <div class="card kpi">
+        <div class="k-label">Nombre de clients</div>
+        <div class="k-value"><?= $nombreClients ?></div>
+        <div class="k-foot">Comptes enregistrés</div>
+    </div>
     <div class="card kpi">
         <div class="k-label">Préfixes disponibles</div>
         <div class="k-value gold"><?= count($prefixes) ?></div>

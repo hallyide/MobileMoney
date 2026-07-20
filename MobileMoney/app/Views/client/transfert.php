@@ -7,11 +7,11 @@
         <h1>Effectuer un transfert</h1>
         <p>Solde actuel : <strong class="td-mono"><?= number_format((float) $compte['soldeActuel'], 0, ',', ' ') ?> Ar</strong></p>
     </div>
-    <a class="btn" href="<?= site_url('client/' . $compte['id']) ?>">← Retour</a>
+    <a class="btn" href="<?= site_url('client') ?>">← Retour</a>
 </div>
 
 <div class="card card-pad form-page">
-    <form method="post" action="<?= site_url('client/' . $compte['id'] . '/transfert') ?>">
+    <form method="post" action="<?= site_url('client/transfert') ?>">
         <div class="field">
             <label for="numeroDestinataire">Numéro du destinataire</label>
             <input class="input input-mono" id="numeroDestinataire" name="numero"

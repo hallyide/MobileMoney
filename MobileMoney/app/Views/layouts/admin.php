@@ -9,15 +9,21 @@
 <body class="ink">
 <header class="topbar">
     <div class="topbar-inner">
-        <a class="brand" href="<?= site_url('admin/prefixes') ?>">
+        <a class="brand" href="<?= site_url('admin/dashboard') ?>">
             <span class="brand-mark">MM</span>
             <span>Mobile Money<small>Espace opérateur</small></span>
         </a>
         <nav class="nav-flow" aria-label="Navigation opérateur">
-            <a href="<?= site_url('admin/prefixes') ?>"
-               class="<?= ($section ?? '') === 'prefixes' ? 'active' : '' ?>">Préfixes</a>
+            <a href="<?= site_url('admin/dashboard') ?>"
+               class="<?= ($section ?? '') === 'prefixes' ? 'active' : '' ?>">Tableau de bord</a>
+            <a href="<?= site_url('admin/baremes') ?>"
+               class="<?= ($section ?? '') === 'baremes' ? 'active' : '' ?>">Barème des frais</a>
+            <a href="<?= site_url('admin/gains') ?>"
+               class="<?= ($section ?? '') === 'gains' ? 'active' : '' ?>">Gains</a>
             <a href="<?= site_url('admin/comptes') ?>"
                class="<?= ($section ?? '') === 'comptes' ? 'active' : '' ?>">Comptes clients</a>
+            <span class="nav-sep"></span>
+            <a href="<?= site_url('/') ?>" class="btn-logout">Quitter</a>
         </nav>
     </div>
 </header>

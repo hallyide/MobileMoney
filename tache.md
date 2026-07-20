@@ -1,94 +1,83 @@
-# TODO List — Projet de Gestion de Transactions
+# Tâches — Projet Mobile Money
 
-## 1. Initialisation & Préparation
-
-| Statut | Tâche | Responsable |
-|--------|-------|-------------|
-| ☑ | Configuration du dépôt Git (préparation du futur **Tag v1**) | **ETU1944** |
-| ☐ | Recherche et intégration du template (Interface **Opérateur** et **Client**) | **ETU4269** |
-
----
-
-## 2. Base de données & Données initiales
+## 1. Initialisation et préparation
 
 | Statut | Tâche | Responsable |
-|--------|-------|-------------|
-| ☐ | Création de la base de données | **ETU4269** |
-| ☐ | Création des tables : Utilisateurs, Configuration des préfixes, Barème des frais, Transactions | **ETU4269** |
-| ☑ | Insertion des données de test et du barème des frais (Seeding) | **ETU1944** |
+|---|---|---|
+| ☑ | Configuration du dépôt Git | **ETU1944** |
+| ☑ | Recherche et intégration du template opérateur/client | **ETU4269** |
 
----
-
-## 3. Développement du Back-Office (Opérateur)
+## 2. Base de données et données initiales
 
 | Statut | Tâche | Responsable |
-|--------|-------|-------------|
-| ☑ | Module de gestion et configuration des préfixes téléphoniques | **ETU1944** |
-| ☐ | Module de gestion du barème des frais par tranche | **ETU4269** |
-| ☐ | Écran de suivi des gains de l'opérateur (frais de retrait et de transfert) | **ETU4269** |
-| ☑ | Écran de visualisation de la situation des comptes clients | **ETU1944** |
+|---|---|---|
+| ☑ | Création de la base SQLite embarquée | **ETU4269** |
+| ☑ | Création des tables : comptes, préfixes, barèmes, mouvements, frais et caisse | **ETU4269** |
+| ☑ | Insertion des données de test et du barème des frais | **ETU1944** |
 
----
-
-## 4. Développement de l'Application (Client)
+## 3. Back-office opérateur
 
 | Statut | Tâche | Responsable |
-|--------|-------|-------------|
-| ☐ | Système de connexion automatique par numéro de téléphone (avec vérification du préfixe) | **ETU4269** |
-| ☑ | Affichage du solde en temps réel | **ETU1944** |
-| ☑ | Module de dépôt (simulation automatique) | **ETU1944** |
-| ☐ | Module de retrait (simulation automatique avec déduction des frais) | **ETU4269** |
-| ☑ | Module de transfert de compte à compte (calcul et application dynamique des frais) | **ETU1944** |
-| ☐ | Écran de consultation de l'historique des transactions | **ETU4269** |
+|---|---|---|
+| ☑ | Gestion des préfixes téléphoniques | **ETU1944** |
+| ☑ | Gestion du barème des frais par tranche | **ETU4269** |
+| ☑ | Suivi des gains de l’opérateur pour les retraits et transferts | **ETU4269** |
+| ☑ | Visualisation de la situation et des mouvements des comptes clients | **ETU1944** |
 
----
-
-## 5. Finalisation & Livraison
+## 4. Application client
 
 | Statut | Tâche | Responsable |
-|--------|-------|-------------|
-| ☐ | Tests globaux des calculs de frais et des transferts | **ETU4269** |
-| ☐ | Création du **Tag Git v1** | **ETU1944** |
-| ☐ | Déploiement ou livraison finale | **ETU1944** |
+|---|---|---|
+| ☑ | Connexion automatique par numéro avec vérification du préfixe et création du compte | **ETU4269** |
+| ☑ | Affichage du solde actuel | **ETU1944** |
+| ☑ | Dépôt automatique avec frais actuellement fixés à zéro | **ETU1944** |
+| ☑ | Retrait automatique avec déduction des frais | **ETU4269** |
+| ☑ | Transfert de compte à compte avec calcul dynamique des frais | **ETU1944** |
+| ☑ | Consultation de l’historique des transactions | **ETU4269** |
 
----
+## 5. Finalisation et livraison
 
-## Répartition des tâches
+| Statut | Tâche | Responsable |
+|---|---|---|
+| ☑ | Tests globaux des dépôts, retraits, transferts et frais | **ETU4269** |
+| ☐ | Création du tag Git **v1** après validation finale | **ETU1944** |
+| ☐ | Livraison finale sur la branche principale | **ETU1944** |
+
+## Répartition
 
 ### ETU1944
 
 - [x] Configuration du dépôt Git
-- [x] Insertion des données de test (Seeding)
-- [x] Gestion des préfixes téléphoniques
-- [x] Visualisation des comptes clients
+- [x] Données de test et seeder rejouable
+- [x] Gestion des préfixes
+- [x] Situation des comptes clients
 - [x] Affichage du solde
-- [x] Module de dépôt
-- [x] Module de transfert
-- [ ] Création du Tag Git v1 (à faire après intégration)
-- [ ] Déploiement / Livraison finale (à faire après intégration)
+- [x] Dépôt
+- [x] Transfert
+- [ ] Tag Git v1 après validation
+- [ ] Livraison finale après validation
 
 ### ETU4269
-- [x] Intégration du template
-- [x] Création de la base de données
-- [x] Création des tables
-- [x] Gestion du barème des frais
-- [x] Suivi des gains de l'opérateur
-- [ ] Connexion automatique
-- [ ] Module de retrait
-- [ ] Historique des transactions
-- [ ] Tests globaux
 
----
+- [x] Intégration du template
+- [x] Base SQLite et tables
+- [x] Gestion du barème
+- [x] Suivi des gains
+- [x] Connexion automatique
+- [x] Retrait
+- [x] Historique des transactions
+- [x] Tests globaux
 
 ## Progression
 
-- **Total des tâches :** 18
-- **Terminées :** 7 / 18
-- **En cours :** 0
-- **Restantes :** 11
+- **Total :** 18 tâches
+- **Terminées :** 16 / 18
+- **Restantes :** tag `v1` et livraison finale, après validation de l’application
 
-## Note d'intégration
+## Choix techniques après audit
 
-Les pages client utilisent provisoirement la route `/client/{idCompte}`. Après la création
-du module de connexion par ETU4269, l'identifiant devra être lu depuis la session utilisateur.
-La logique des dépôts et des transferts dans `TransactionService` ne devra pas être modifiée.
+- Les données et les tableaux sont produits par PHP depuis SQLite.
+- JavaScript est limité aux modales, notifications, recherche locale et estimation visuelle des frais.
+- Toutes les opérations financières sont exécutées dans des transactions SQL.
+- Le client est identifié par la session ; aucun identifiant de compte sensible n’est placé dans l’URL.
+- `base.sql`, situé à la racine du dépôt, est l’unique script de création et de données initiales.

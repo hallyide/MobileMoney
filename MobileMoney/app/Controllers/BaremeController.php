@@ -1,52 +1,88 @@
 <?php
+
 namespace App\Controllers;
 
-use CodeIgniter\RESTful\ResourceController;
+use App\Models\BaremeFraisModel;
+use App\Models\TypeOperationModel;
+use CodeIgniter\HTTP\RedirectResponse;
 
-class BaremeController extends ResourceController
+class BaremeController extends BaseController
 {
-    protected $format = 'json';
-
-    public function index()
+    public function index(): string
     {
-        $bareme = model('BaremeFraisModel')->findAll();
-        $types  = model('TypeOperationModel')->findAll();
-        $typeMap = array_column($types, 'type', 'id');
+        $db = db_connect();
 
-        foreach ($bareme as &$b) {
-            $b['type_label'] = $typeMap[$b['idtypeOp']] ?? '';
+        return view('admin/bareme', [
+            'titre' => 'Barème des frais',
+            'section' => 'baremes',
+            'types' => (new TypeOperationModel())->orderBy('id')->findAll(),
+            'baremes' => $db->table('baremeFrais')
+                ->select('baremeFrais.*, typeOperation.type AS operation')
+                ->join('typeOperation', 'typeOperation.id = baremeFrais.idtypeOp')
+                ->orderBy('typeOperation.id')->orderBy('baremeFrais.montant_min')
+                ->get()->getResultArray(),
+        ]);
+    }
+
+    public function create(): RedirectResponse
+    {
+        $donnees = $this->donneesValides();
+        if (is_string($donnees)) {
+            return redirect()->back()->withInput()->with('erreur', $donnees);
         }
-        return $this->respond($bareme);
+
+        (new BaremeFraisModel())->insert($donnees);
+        return redirect()->to('/admin/baremes')->with('succes', 'La tranche a été ajoutée.');
     }
 
-    public function create()
+    public function update(int $id): RedirectResponse
     {
-        $data = $this->request->getJSON(true);
-        $model = model('BaremeFraisModel');
-        $id = $model->insert([
-            'idtypeOp'    => $data['idtypeOp'],
-            'montant_min' => $data['montant_min'],
-            'montant_max' => $data['montant_max'],
-            'prix'        => $data['prix'],
-        ]);
-        return $this->respondCreated(['id' => $id]);
+        $model = new BaremeFraisModel();
+        if ($model->find($id) === null) {
+            return redirect()->to('/admin/baremes')->with('erreur', 'Tranche introuvable.');
+        }
+
+        $donnees = $this->donneesValides($id);
+        if (is_string($donnees)) {
+            return redirect()->back()->withInput()->with('erreur', $donnees);
+        }
+
+        $model->update($id, $donnees);
+        return redirect()->to('/admin/baremes')->with('succes', 'La tranche a été modifiée.');
     }
 
-    public function update($id = null)
+    public function delete(int $id): RedirectResponse
     {
-        $data = $this->request->getJSON(true);
-        model('BaremeFraisModel')->update($id, [
-            'idtypeOp'    => $data['idtypeOp'],
-            'montant_min' => $data['montant_min'],
-            'montant_max' => $data['montant_max'],
-            'prix'        => $data['prix'],
-        ]);
-        return $this->respond(['success' => true]);
+        (new BaremeFraisModel())->delete($id);
+        return redirect()->to('/admin/baremes')->with('succes', 'La tranche a été supprimée.');
     }
 
-    public function delete($id = null)
+    /** Valide les nombres et interdit deux tranches qui se chevauchent. */
+    private function donneesValides(?int $idExclu = null): array|string
     {
-        model('BaremeFraisModel')->delete($id);
-        return $this->respondDeleted(['success' => true]);
+        $typeId = (int) $this->request->getPost('idtypeOp');
+        $minimum = (float) $this->request->getPost('montant_min');
+        $maximum = (float) $this->request->getPost('montant_max');
+        $prix = (float) $this->request->getPost('prix');
+
+        if ((new TypeOperationModel())->find($typeId) === null) {
+            return 'Le type d’opération est invalide.';
+        }
+        if ($minimum < 0 || $maximum < $minimum || $prix < 0) {
+            return 'Les montants et le prix doivent être positifs, et le maximum doit dépasser le minimum.';
+        }
+
+        $builder = db_connect()->table('baremeFrais')
+            ->where('idtypeOp', $typeId)
+            ->where('montant_min <=', $maximum)
+            ->where('montant_max >=', $minimum);
+        if ($idExclu !== null) {
+            $builder->where('id !=', $idExclu);
+        }
+        if ($builder->countAllResults() > 0) {
+            return 'Cette tranche chevauche une tranche existante.';
+        }
+
+        return ['idtypeOp' => $typeId, 'montant_min' => $minimum, 'montant_max' => $maximum, 'prix' => $prix];
     }
 }

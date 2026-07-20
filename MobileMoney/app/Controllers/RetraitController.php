@@ -1,68 +1,64 @@
 <?php
+
 namespace App\Controllers;
 
-use CodeIgniter\RESTful\ResourceController;
+use App\Models\CompteModel;
+use App\Services\TransactionService;
+use CodeIgniter\HTTP\RedirectResponse;
+use DomainException;
 
-class RetraitController extends ResourceController
+class RetraitController extends BaseController
 {
-    protected $format = 'json';
-
-    public function process()
+    public function index(): string|RedirectResponse
     {
-        $data = $this->request->getJSON(true);
-        $compteModel = model('CompteModel');
-        $mvmtModel   = model('MvmtCompteModel');
-        $fraisModel  = model('FraisMvmtModel');
-        $caisseModel = model('CaisseOpModel');
-        $baremeModel = model('BaremeFraisModel');
-
-        $numero  = session()->get('client_numero');
-        $compte  = $compteModel->where('numero', $numero)->first();
-        if (!$compte) return $this->fail('Session expirée.', 401);
-
-        $montant = (float) $data['montant'];
-        if ($montant <= 0) return $this->fail('Montant invalide.');
-
-        $idtypeOp = 2; // retrait
-        $frais = $this->computeFrais($baremeModel, $idtypeOp, $montant);
-
-        if (($montant + $frais) > $compte['soldeActuel']) {
-            return $this->fail('Solde insuffisant (frais inclus : ' . $frais . ').');
+        $compte = $this->compteConnecte();
+        if ($compte instanceof RedirectResponse) {
+            return $compte;
         }
 
-        $date = date('Y-m-d');
-        $mvmtId = $mvmtModel->insert([
-            'idCompte'  => $compte['id'],
-            'valeur'    => $montant,
-            'date'      => $date,
-            'idType'    => 2, // credit (sortie)
-            'indTypeOp' => $idtypeOp,
+        return view('client/retrait', [
+            'titre' => 'Faire un retrait',
+            'section' => 'retrait',
+            'compte' => $compte,
+            'baremes' => $this->baremesPourRetrait(),
         ]);
-
-        $fraisModel->insert([
-            'idMvmtCompt' => $mvmtId,
-            'valeur'      => $frais,
-            'typeOp'      => $idtypeOp,
-            'date'        => $date,
-        ]);
-
-        $caisse = $caisseModel->find(1);
-        $caisseModel->update(1, ['gains' => $caisse['gains'] + $frais]);
-
-        $nouveauSolde = $compte['soldeActuel'] - ($montant + $frais);
-        $compteModel->update($compte['id'], ['soldeActuel' => $nouveauSolde]);
-
-        return $this->respond(['success' => true, 'frais' => $frais, 'nouveauSolde' => $nouveauSolde]);
     }
 
-    private function computeFrais($baremeModel, $idtypeOp, $montant)
+    public function process(): RedirectResponse
     {
-        $lignes = $baremeModel->where('idtypeOp', $idtypeOp)->findAll();
-        foreach ($lignes as $b) {
-            if ($montant >= $b['montant_min'] && $montant <= $b['montant_max']) {
-                return $b['prix'];
-            }
+        $compte = $this->compteConnecte();
+        if ($compte instanceof RedirectResponse) {
+            return $compte;
         }
-        return end($lignes)['prix'] ?? 0;
+
+        try {
+            $frais = (new TransactionService())->retirer(
+                (int) $compte['id'],
+                (float) $this->request->getPost('montant')
+            );
+            $message = 'Retrait effectué. Frais : ' . number_format($frais, 0, ',', ' ') . ' Ar.';
+
+            return redirect()->to('/client')->with('succes', $message);
+        } catch (DomainException $exception) {
+            return redirect()->back()->withInput()->with('erreur', $exception->getMessage());
+        }
+    }
+
+    private function compteConnecte(): array|RedirectResponse
+    {
+        $id = session()->get('client_id');
+        $compte = $id ? (new CompteModel())->find((int) $id) : null;
+
+        return $compte ?? redirect()->to('/client/login')->with('erreur', 'Veuillez vous connecter.');
+    }
+
+    private function baremesPourRetrait(): array
+    {
+        return db_connect()->table('baremeFrais')
+            ->select('baremeFrais.montant_min, baremeFrais.montant_max, baremeFrais.prix')
+            ->join('typeOperation', 'typeOperation.id = baremeFrais.idtypeOp')
+            ->where('typeOperation.type', 'retrait')
+            ->orderBy('baremeFrais.montant_min', 'ASC')
+            ->get()->getResultArray();
     }
 }

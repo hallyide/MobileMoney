@@ -6,92 +6,115 @@ use App\Controllers\BaseController;
 use App\Models\CompteModel;
 use App\Models\MouvementCompteModel;
 use App\Services\TransactionService;
-use CodeIgniter\Exceptions\PageNotFoundException;
 use CodeIgniter\HTTP\RedirectResponse;
 use DomainException;
 
 class CompteController extends BaseController
 {
-    public function index(int $id): string
+    public function index(): string|RedirectResponse
     {
-        $compte = $this->compteOuErreur($id);
+        $compte = $this->compteConnecte();
+        if ($compte instanceof RedirectResponse) {
+            return $compte;
+        }
+
         $mouvementModel = new MouvementCompteModel();
 
         return view('client/dashboard', [
             'titre' => 'Mon compte',
             'section' => 'compte',
             'compte' => $compte,
-            'mouvements' => $mouvementModel->forAccount($id, 10),
-            'nombreMouvements' => $mouvementModel->where('idCompte', $id)->countAllResults(),
+            'mouvements' => $mouvementModel->forAccount((int) $compte['id'], 10),
+            'nombreMouvements' => $mouvementModel->where('idCompte', $compte['id'])->countAllResults(),
         ]);
     }
 
-    public function depotForm(int $id): string
+    public function depotForm(): string|RedirectResponse
     {
+        $compte = $this->compteConnecte();
+        if ($compte instanceof RedirectResponse) {
+            return $compte;
+        }
+
         return view('client/depot', [
-            'titre' => 'Faire un depot',
+            'titre' => 'Faire un dépôt',
             'section' => 'depot',
-            'compte' => $this->compteOuErreur($id),
+            'compte' => $compte,
             'baremes' => $this->baremesPour('depot'),
         ]);
     }
 
-    public function depot(int $id): RedirectResponse
+    public function depot(): RedirectResponse
     {
+        $compte = $this->compteConnecte();
+        if ($compte instanceof RedirectResponse) {
+            return $compte;
+        }
+
         try {
             $frais = (new TransactionService())->deposer(
-                $id,
+                (int) $compte['id'],
                 (float) $this->request->getPost('montant')
             );
+            $message = 'Dépôt effectué avec succès. Frais : ' . number_format($frais, 0, ',', ' ') . ' Ar.';
 
-            $message = 'Depot effectue avec succes.';
-            if ($frais > 0) {
-                $message .= ' Frais : ' . number_format($frais, 0, ',', ' ') . ' Ar.';
-            }
-
-            return redirect()->to("/client/{$id}")->with('succes', $message);
+            return redirect()->to('/client')->with('succes', $message);
         } catch (DomainException $exception) {
             return redirect()->back()->withInput()->with('erreur', $exception->getMessage());
         }
     }
 
-    public function transfertForm(int $id): string
+    public function transfertForm(): string|RedirectResponse
     {
+        $compte = $this->compteConnecte();
+        if ($compte instanceof RedirectResponse) {
+            return $compte;
+        }
+
         return view('client/transfert', [
             'titre' => 'Faire un transfert',
             'section' => 'transfert',
-            'compte' => $this->compteOuErreur($id),
+            'compte' => $compte,
             'baremes' => $this->baremesPour('transfert'),
         ]);
     }
 
-    public function transfert(int $id): RedirectResponse
+    public function transfert(): RedirectResponse
     {
+        $compte = $this->compteConnecte();
+        if ($compte instanceof RedirectResponse) {
+            return $compte;
+        }
+
         try {
             $frais = (new TransactionService())->transferer(
-                $id,
+                (int) $compte['id'],
                 (string) $this->request->getPost('numero'),
                 (float) $this->request->getPost('montant')
             );
+            $message = 'Transfert effectué. Frais : ' . number_format($frais, 0, ',', ' ') . ' Ar.';
 
-            $message = 'Transfert effectue. Frais : ' . number_format($frais, 0, ',', ' ') . ' Ar.';
-            return redirect()->to("/client/{$id}")->with('succes', $message);
+            return redirect()->to('/client')->with('succes', $message);
         } catch (DomainException $exception) {
             return redirect()->back()->withInput()->with('erreur', $exception->getMessage());
         }
     }
 
-    private function compteOuErreur(int $id): array
+    /** Retourne le compte de la session ou redirige vers la connexion. */
+    private function compteConnecte(): array|RedirectResponse
     {
-        $compte = (new CompteModel())->find($id);
+        $id = session()->get('client_id');
+        $compte = $id ? (new CompteModel())->find((int) $id) : null;
+
         if ($compte === null) {
-            throw PageNotFoundException::forPageNotFound('Compte introuvable.');
+            session()->remove(['client_id', 'client_numero']);
+            return redirect()->to('/client/login')->with('erreur', 'Veuillez vous connecter.');
         }
 
         return $compte;
     }
 
-    /** Retourne le bareme utilise pour afficher une estimation avant validation. */
+    /** Retourne le barème utilisé pour la petite estimation visuelle. */
     private function baremesPour(string $operation): array
     {
         return db_connect()->table('baremeFrais')

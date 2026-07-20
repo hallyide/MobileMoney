@@ -1,3 +1,4 @@
+-- Script unique de création et de données initiales du projet.
 PRAGMA foreign_keys = ON;
 
 CREATE TABLE prefixeDispo (
@@ -69,8 +70,6 @@ CREATE TABLE FraisMvmt (
     FOREIGN KEY (typeOp)
         REFERENCES typeOperation(id)
 );
-
-ALTER TABLE compte ADD COLUMN nom VARCHAR(150) NOT NULL DEFAULT '';
 
 -- ==================================================================
 -- Donnees initiales (ETU1944)

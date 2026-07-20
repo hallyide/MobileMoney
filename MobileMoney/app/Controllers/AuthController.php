@@ -1,39 +1,61 @@
 <?php
+
 namespace App\Controllers;
 
-use CodeIgniter\RESTful\ResourceController;
+use App\Models\CompteModel;
+use App\Models\PrefixeModel;
+use CodeIgniter\HTTP\RedirectResponse;
 
-class AuthController extends ResourceController
+class AuthController extends BaseController
 {
-    protected $format = 'json';
-
-    public function login()
+    public function index(): string|RedirectResponse
     {
-        $data = $this->request->getJSON(true);
-        $numero = trim($data['numero'] ?? '');
-
-        if (!$numero) {
-            return $this->fail('Numéro requis.');
+        if (session()->has('client_id')) {
+            return redirect()->to('/client');
         }
 
-        // vérification du préfixe autorisé
-        $prefixes = model('PrefixeDispoModel')->findColumn('prefixe');
-        $prefixOk = false;
-        foreach ($prefixes as $p) {
-            if (strpos($numero, $p) === 0) { $prefixOk = true; break; }
-        }
-        if (!$prefixOk) {
-            return $this->fail('Préfixe non autorisé.', 403);
+        return view('client/login', ['titre' => 'Connexion client']);
+    }
+
+    /**
+     * Connecte automatiquement le numero. S'il respecte un prefixe autorise
+     * mais n'existe pas encore, son compte est cree avec un solde nul.
+     */
+    public function login(): RedirectResponse
+    {
+        $numero = trim((string) $this->request->getPost('numero'));
+
+        if (! preg_match('/^[0-9]{10}$/', $numero)) {
+            return redirect()->back()->withInput()->with('erreur', 'Le numéro doit contenir exactement 10 chiffres.');
         }
 
-        $compte = model('CompteModel')->where('numero', $numero)->first();
-        if (!$compte) {
-            return $this->fail('Aucun compte associé à ce numéro.', 404);
+        $prefixe = substr($numero, 0, 3);
+        if ((new PrefixeModel())->where('prefixe', $prefixe)->first() === null) {
+            return redirect()->back()->withInput()->with('erreur', 'Ce préfixe téléphonique n’est pas autorisé.');
         }
 
-        session()->set('client_numero', $compte['numero']);
-        session()->set('client_id', $compte['id']);
+        $compteModel = new CompteModel();
+        $compte = $compteModel->where('numero', $numero)->first();
 
-        return $this->respond(['success' => true, 'compte' => $compte]);
+        if ($compte === null) {
+            $id = $compteModel->insert(['numero' => $numero, 'soldeActuel' => 0], true);
+            $compte = $compteModel->find($id);
+        }
+
+        session()->regenerate();
+        session()->set([
+            'client_id' => (int) $compte['id'],
+            'client_numero' => $compte['numero'],
+        ]);
+
+        return redirect()->to('/client')->with('succes', 'Connexion réussie.');
+    }
+
+    public function logout(): RedirectResponse
+    {
+        session()->remove(['client_id', 'client_numero']);
+        session()->regenerate();
+
+        return redirect()->to('/client/login')->with('succes', 'Vous êtes déconnecté.');
     }
 }

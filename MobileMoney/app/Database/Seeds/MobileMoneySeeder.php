@@ -6,7 +6,7 @@ use CodeIgniter\Database\Seeder;
 
 /**
  * Donnees necessaires pour tester la version 1.
- * Les tables doivent deja avoir ete creees avec le fichier mm.sql.
+ * Les tables doivent déjà avoir été créées avec le fichier base.sql.
  */
 class MobileMoneySeeder extends Seeder
 {
