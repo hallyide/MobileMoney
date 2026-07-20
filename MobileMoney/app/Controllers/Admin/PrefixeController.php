@@ -10,8 +10,9 @@ class PrefixeController extends BaseController
 {
     public function index(): string
     {
-        return view('admin/prefixes/index', [
+        return view('admin/dashboard', [
             'titre' => 'Configuration des prefixes',
+            'section' => 'prefixes',
             'prefixes' => (new PrefixeModel())->orderBy('prefixe')->findAll(),
         ]);
     }

@@ -15,19 +15,24 @@ class CompteController extends BaseController
     public function index(int $id): string
     {
         $compte = $this->compteOuErreur($id);
+        $mouvementModel = new MouvementCompteModel();
 
-        return view('client/compte/index', [
+        return view('client/dashboard', [
             'titre' => 'Mon compte',
+            'section' => 'compte',
             'compte' => $compte,
-            'mouvements' => (new MouvementCompteModel())->forAccount($id, 10),
+            'mouvements' => $mouvementModel->forAccount($id, 10),
+            'nombreMouvements' => $mouvementModel->where('idCompte', $id)->countAllResults(),
         ]);
     }
 
     public function depotForm(int $id): string
     {
-        return view('client/compte/depot', [
+        return view('client/depot', [
             'titre' => 'Faire un depot',
+            'section' => 'depot',
             'compte' => $this->compteOuErreur($id),
+            'baremes' => $this->baremesPour('depot'),
         ]);
     }
 
@@ -52,9 +57,11 @@ class CompteController extends BaseController
 
     public function transfertForm(int $id): string
     {
-        return view('client/compte/transfert', [
+        return view('client/transfert', [
             'titre' => 'Faire un transfert',
+            'section' => 'transfert',
             'compte' => $this->compteOuErreur($id),
+            'baremes' => $this->baremesPour('transfert'),
         ]);
     }
 
@@ -82,5 +89,16 @@ class CompteController extends BaseController
         }
 
         return $compte;
+    }
+
+    /** Retourne le bareme utilise pour afficher une estimation avant validation. */
+    private function baremesPour(string $operation): array
+    {
+        return db_connect()->table('baremeFrais')
+            ->select('baremeFrais.montant_min, baremeFrais.montant_max, baremeFrais.prix')
+            ->join('typeOperation', 'typeOperation.id = baremeFrais.idtypeOp')
+            ->where('typeOperation.type', $operation)
+            ->orderBy('baremeFrais.montant_min', 'ASC')
+            ->get()->getResultArray();
     }
 }
