@@ -14,7 +14,7 @@
     <p class="sub">Plateforme de gestion des comptes et transactions</p>
 
     <div style="display:flex; flex-direction:column; gap:12px;">
-      <a class="btn btn-primary btn-block" href="admin/dashboard.html">Espace Opérateur</a>
+      <a class="btn btn-primary btn-block" href="admin/dashboard">Espace Opérateur</a>
       <a class="btn btn-block" href="client/login.html">Espace Client</a>
     </div>
   </div>

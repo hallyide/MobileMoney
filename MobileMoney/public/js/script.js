@@ -1,19 +1,13 @@
-/* =========================================================
-   FLUX — script.js
-   Fichier JS unique pour tout le projet.
-   Simule la base de données via localStorage (tables décrites
-   dans le cahier des charges) + logique de chaque page.
-   ========================================================= */
-
 (function(){
   "use strict";
 
   var DB_KEY     = "flux_db_v1";
   var SESSION_KEY= "flux_client_session";
   var RECENT_KEY = "flux_recent_clients";
+  var API_BASE   = ""; // ex: "http://localhost:8080" si le front n'est pas servi par CI
 
   /* =======================================================
-     1. BASE DE DONNÉES SIMULÉE
+     1. BASE DE DONNÉES SIMULÉE (fallback / pages non migrées)
      ======================================================= */
 
   function seedDB(){
@@ -54,9 +48,7 @@
       caisseOp: [ { id:1, gains:0 } ]
     };
 
-    // Génération de mouvements passés (45 jours) pour peupler
-    // les tableaux et le graphique de statistiques.
-    var opCycle = [1,2,3]; // depot, retrait, transfert
+    var opCycle = [1,2,3];
     var mvmtId = 1, fraisId = 1;
     var now = new Date();
     for(var d=44; d>=0; d--){
@@ -68,25 +60,18 @@
         var compteIdx = (d + n) % db.compte.length;
         var compte = db.compte[compteIdx];
         var idTypeOp = opCycle[(d + n) % 3];
-        var montant = 10000 + ((d*137 + n*911) % 40) * 10000; // valeurs variées
-        var idType = (idTypeOp === 1) ? 1 : 2; // depot=debit(entree), sinon credit(sortie)
+        var montant = 10000 + ((d*137 + n*911) % 40) * 10000;
+        var idType = (idTypeOp === 1) ? 1 : 2;
 
         db.mvmtCompte.push({
-          id: mvmtId,
-          idCompte: compte.id,
-          valeur: montant,
-          date: dateStr,
-          idType: idType,
-          indTypeOp: idTypeOp
+          id: mvmtId, idCompte: compte.id, valeur: montant,
+          date: dateStr, idType: idType, indTypeOp: idTypeOp
         });
 
         var frais = computeFrais(db, idTypeOp, montant);
         db.fraisMvmt.push({
-          id: fraisId,
-          idMvmtCompt: mvmtId,
-          valeur: frais,
-          typeOp: idTypeOp,
-          date: dateStr
+          id: fraisId, idMvmtCompt: mvmtId, valeur: frais,
+          typeOp: idTypeOp, date: dateStr
         });
         db.caisseOp[0].gains += frais;
 
@@ -157,6 +142,32 @@
   };
 
   /* =======================================================
+     2bis. HELPER FETCH (API CodeIgniter)
+     ======================================================= */
+  function apiGet(path){
+    return fetch(API_BASE + path, { credentials: "same-origin" })
+      .then(function(r){ if(!r.ok) return r.json().then(function(e){ throw e; }); return r.json(); });
+  }
+  function apiSend(path, method, body){
+    return fetch(API_BASE + path, {
+      method: method,
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body || {})
+    }).then(function(r){
+      return r.json().then(function(data){
+        if(!r.ok){ throw data; }
+        return data;
+      });
+    });
+  }
+  function apiDelete(path){
+    return fetch(API_BASE + path, { method: "DELETE", credentials: "same-origin" })
+      .then(function(r){ return r.json().then(function(data){ if(!r.ok) throw data; return data; }); });
+  }
+  window.API = { get: apiGet, send: apiSend, del: apiDelete };
+
+  /* =======================================================
      3. MODALES
      ======================================================= */
   function openModal(id){
@@ -214,7 +225,7 @@
   window.toast = toast;
 
   /* =======================================================
-     5. GRAPHIQUE (canvas natif, sans dépendance)
+     5. GRAPHIQUE (canvas natif, sans dépendance) — inchangé
      ======================================================= */
   function aggregate(db, period){
     var now = new Date();
@@ -247,7 +258,7 @@
         var m1 = new Date(now.getFullYear(), now.getMonth()-mo+1, 1);
         buckets.push({ label: m0.toLocaleDateString("fr-FR",{month:"short"}), value: sumForRange(m0,m1) });
       }
-    } else { // annee
+    } else {
       for(var y=4;y>=0;y--){
         var y0 = new Date(now.getFullYear()-y, 0, 1);
         var y1 = new Date(now.getFullYear()-y+1, 0, 1);
@@ -291,7 +302,6 @@
     function px(i){ return padL + stepX*i; }
     function py(v){ return padT + h - (h * v/max); }
 
-    // aire sous la courbe
     var grad = ctx.createLinearGradient(0,padT,0,padT+h);
     grad.addColorStop(0, "rgba(212,169,71,.35)");
     grad.addColorStop(1, "rgba(212,169,71,0)");
@@ -303,7 +313,6 @@
     ctx.fillStyle = grad;
     ctx.fill();
 
-    // ligne
     ctx.beginPath();
     buckets.forEach(function(b,i){
       var x=px(i), y=py(b.value);
@@ -314,7 +323,6 @@
     ctx.lineJoin = "round";
     ctx.stroke();
 
-    // points
     buckets.forEach(function(b,i){
       var x=px(i), y=py(b.value);
       ctx.beginPath();
@@ -326,7 +334,6 @@
       ctx.stroke();
     });
 
-    // labels X (un sur deux si trop nombreux)
     ctx.fillStyle = "rgba(143,160,181,.85)";
     ctx.font = "10.5px Inter, sans-serif";
     ctx.textAlign = "center";
@@ -359,7 +366,7 @@
   }
 
   /* =======================================================
-     6. CLIENTS RÉCEMMENT CONSULTÉS (admin)
+     6. CLIENTS RÉCEMMENT CONSULTÉS (admin, localStorage)
      ======================================================= */
   function getRecent(){
     try{ return JSON.parse(localStorage.getItem(RECENT_KEY)) || []; }
@@ -373,7 +380,7 @@
   }
 
   /* =======================================================
-     7. SESSION CLIENT
+     7. SESSION CLIENT (miroir local, en plus de la session PHP)
      ======================================================= */
   function getClientSession(){ return sessionStorage.getItem(SESSION_KEY); }
   function setClientSession(numero){ sessionStorage.setItem(SESSION_KEY, numero); }
@@ -407,7 +414,7 @@
     if(qs("#page-transfert"))         initTransfert();
   });
 
-  /* ---------- 8.1 Dashboard opérateur ---------- */
+  /* ---------- 8.1 Dashboard opérateur (localStorage, ETU1944) ---------- */
   function initAdminDashboard(){
     var db = loadDB();
 
@@ -481,51 +488,65 @@
     });
   }
 
-  /* ---------- 8.2 Barème des frais ---------- */
+  /* ---------- 8.2 Barème des frais (API CI4, ETU4269) ---------- */
   function initBareme(){
-    var db = loadDB();
+    var typeLabels = { depot:"Dépôt", retrait:"Retrait", transfert:"Transfert" };
+    var typesCache = [];
 
     function fillTypeSelects(){
-      qsa(".op-type-select").forEach(function(sel){
-        sel.innerHTML = db.typeOperation.map(function(t){
-          return '<option value="'+t.id+'">'+opTypeLabel(t.type)+'</option>';
-        }).join("");
+      return apiGet("/api/typeoperation").catch(function(){ return []; }).then(function(types){
+        // fallback si la route /api/typeoperation n'existe pas encore côté serveur :
+        if(!types || !types.length){
+          types = [{id:1,type:"depot"},{id:2,type:"retrait"},{id:3,type:"transfert"}];
+        }
+        typesCache = types;
+        qsa(".op-type-select").forEach(function(sel){
+          sel.innerHTML = types.map(function(t){
+            return '<option value="'+t.id+'">'+(typeLabels[t.type]||t.type)+'</option>';
+          }).join("");
+        });
       });
     }
-    fillTypeSelects();
 
     function render(){
-      var body = qs("#baremeTableBody");
-      body.innerHTML = "";
-      if(!db.baremeFrais.length){
-        body.innerHTML = '<tr><td colspan="5"><div class="empty-state">Aucun barème défini.</div></td></tr>';
-        return;
-      }
-      db.baremeFrais
-        .slice()
-        .sort(function(a,b){ return a.idtypeOp - b.idtypeOp || a.montant_min - b.montant_min; })
-        .forEach(function(b){
-          var typeStr = opTypeById(db, b.idtypeOp);
-          var tr = document.createElement("tr");
-          tr.innerHTML =
-            '<td><span class="badge '+typeStr+'">'+opTypeLabel(typeStr)+'</span></td>'+
-            '<td class="td-mono">'+formatAr(b.montant_min)+'</td>'+
-            '<td class="td-mono">'+formatAr(b.montant_max)+'</td>'+
-            '<td class="td-mono">'+formatAr(b.prix)+'</td>'+
-            '<td><div class="row-actions">'+
-              '<button class="btn btn-sm btn-ghost" data-edit="'+b.id+'">Modifier</button>'+
-              '<button class="btn btn-sm btn-danger" data-del="'+b.id+'">Supprimer</button>'+
-            '</div></td>';
-          body.appendChild(tr);
-        });
+      apiGet("/api/bareme").then(function(rows){
+        var body = qs("#baremeTableBody");
+        body.innerHTML = "";
+        if(!rows.length){
+          body.innerHTML = '<tr><td colspan="5"><div class="empty-state">Aucun barème défini.</div></td></tr>';
+          return;
+        }
+        rows
+          .slice()
+          .sort(function(a,b){ return a.idtypeOp - b.idtypeOp || a.montant_min - b.montant_min; })
+          .forEach(function(b){
+            var typeStr = b.type_label || "";
+            var tr = document.createElement("tr");
+            tr.innerHTML =
+              '<td><span class="badge '+typeStr+'">'+(typeLabels[typeStr]||typeStr)+'</span></td>'+
+              '<td class="td-mono">'+formatAr(b.montant_min)+'</td>'+
+              '<td class="td-mono">'+formatAr(b.montant_max)+'</td>'+
+              '<td class="td-mono">'+formatAr(b.prix)+'</td>'+
+              '<td><div class="row-actions">'+
+                '<button class="btn btn-sm btn-ghost" data-edit="'+b.id+'" data-json=\''+JSON.stringify(b).replace(/'/g,"&#39;")+'\'>Modifier</button>'+
+                '<button class="btn btn-sm btn-danger" data-del="'+b.id+'">Supprimer</button>'+
+              '</div></td>';
+            body.appendChild(tr);
+          });
+      }).catch(function(err){
+        toast("Erreur de chargement du barème.", "error");
+        console.error(err);
+      });
     }
-    render();
+
+    fillTypeSelects().then(render);
 
     qs("#baremeTableBody").addEventListener("click", function(e){
       var editBtn = e.target.closest("[data-edit]");
       var delBtn  = e.target.closest("[data-del]");
+
       if(editBtn){
-        var b = db.baremeFrais.find(function(x){ return x.id === Number(editBtn.dataset.edit); });
+        var b = JSON.parse(editBtn.dataset.json);
         qs("#editBaremeId").value = b.id;
         qs("#editBaremeType").value = b.idtypeOp;
         qs("#editBaremeMin").value = b.montant_min;
@@ -533,145 +554,166 @@
         qs("#editBaremePrix").value = b.prix;
         openModal("modalEditBareme");
       }
+
       if(delBtn){
         if(!confirm("Supprimer cette ligne de barème ?")) return;
-        db.baremeFrais = db.baremeFrais.filter(function(x){ return x.id !== Number(delBtn.dataset.del); });
-        saveDB(db); render();
-        toast("Barème supprimé.");
+        apiDelete("/api/bareme/" + delBtn.dataset.del)
+          .then(function(){ render(); toast("Barème supprimé."); })
+          .catch(function(err){ toast("Erreur lors de la suppression.", "error"); console.error(err); });
       }
     });
 
     qs("#formAddBareme").addEventListener("submit", function(e){
       e.preventDefault();
-      db.baremeFrais.push({
-        id: nextId(db.baremeFrais),
+      var payload = {
         idtypeOp: Number(qs("#addBaremeType").value),
         montant_min: Number(qs("#addBaremeMin").value),
         montant_max: Number(qs("#addBaremeMax").value),
         prix: Number(qs("#addBaremePrix").value)
-      });
-      saveDB(db); render();
-      e.target.reset();
-      closeModal("modalAddBareme");
-      toast("Barème ajouté.");
+      };
+      apiSend("/api/bareme", "POST", payload)
+        .then(function(){
+          render();
+          e.target.reset();
+          closeModal("modalAddBareme");
+          toast("Barème ajouté.");
+        })
+        .catch(function(err){ toast("Erreur lors de l'ajout.", "error"); console.error(err); });
     });
 
     qs("#formEditBareme").addEventListener("submit", function(e){
       e.preventDefault();
-      var b = db.baremeFrais.find(function(x){ return x.id === Number(qs("#editBaremeId").value); });
-      b.idtypeOp = Number(qs("#editBaremeType").value);
-      b.montant_min = Number(qs("#editBaremeMin").value);
-      b.montant_max = Number(qs("#editBaremeMax").value);
-      b.prix = Number(qs("#editBaremePrix").value);
-      saveDB(db); render();
-      closeModal("modalEditBareme");
-      toast("Barème modifié.");
+      var id = qs("#editBaremeId").value;
+      var payload = {
+        idtypeOp: Number(qs("#editBaremeType").value),
+        montant_min: Number(qs("#editBaremeMin").value),
+        montant_max: Number(qs("#editBaremeMax").value),
+        prix: Number(qs("#editBaremePrix").value)
+      };
+      apiSend("/api/bareme/" + id, "POST", payload)
+        .then(function(){
+          render();
+          closeModal("modalEditBareme");
+          toast("Barème modifié.");
+        })
+        .catch(function(err){ toast("Erreur lors de la modification.", "error"); console.error(err); });
     });
   }
 
-  /* ---------- 8.3 Historique des gains ---------- */
+  /* ---------- 8.3 Historique des gains (API CI4, ETU4269) ---------- */
   function initHistoriqueGains(){
-    var db = loadDB();
+    var typeLabels = { depot:"Dépôt", retrait:"Retrait", transfert:"Transfert" };
 
     function fillSelects(){
-      qsa(".op-type-select").forEach(function(sel){
-        sel.innerHTML = db.typeOperation.map(function(t){
-          return '<option value="'+t.id+'">'+opTypeLabel(t.type)+'</option>';
-        }).join("");
+      var pTypes = apiGet("/api/typeoperation").catch(function(){
+        return [{id:1,type:"depot"},{id:2,type:"retrait"},{id:3,type:"transfert"}];
       });
-      qsa(".client-select").forEach(function(sel){
-        sel.innerHTML = db.compte.map(function(c){
-          return '<option value="'+c.id+'">'+clientLabel(c)+'</option>';
-        }).join("");
+      var pClients = apiGet("/api/comptes").catch(function(){ return []; });
+
+      return Promise.all([pTypes, pClients]).then(function(res){
+        var types = res[0], clients = res[1];
+        qsa(".op-type-select").forEach(function(sel){
+          sel.innerHTML = types.map(function(t){
+            return '<option value="'+t.id+'">'+(typeLabels[t.type]||t.type)+'</option>';
+          }).join("");
+        });
+        qsa(".client-select").forEach(function(sel){
+          sel.innerHTML = clients.map(function(c){
+            return '<option value="'+c.id+'">'+c.nom+' · '+c.numero+'</option>';
+          }).join("");
+        });
       });
     }
-    fillSelects();
 
     function render(){
-      var body = qs("#gainsTableBody");
-      body.innerHTML = "";
-      var rows = db.fraisMvmt.slice().sort(function(a,b){ return b.id - a.id; });
-      if(!rows.length){
-        body.innerHTML = '<tr><td colspan="6"><div class="empty-state">Aucun frais enregistré.</div></td></tr>';
-        return;
-      }
-      rows.forEach(function(f){
-        var mvmt = db.mvmtCompte.find(function(m){ return m.id === f.idMvmtCompt; });
-        var compte = mvmt ? db.compte.find(function(c){ return c.id === mvmt.idCompte; }) : null;
-        var typeStr = opTypeById(db, f.typeOp);
-        var tr = document.createElement("tr");
-        tr.innerHTML =
-          '<td class="td-mono td-muted">#'+f.id+'</td>'+
-          '<td>'+clientLabel(compte)+'</td>'+
-          '<td><span class="badge '+typeStr+'">'+opTypeLabel(typeStr)+'</span></td>'+
-          '<td class="td-mono">'+formatAr(f.valeur)+'</td>'+
-          '<td class="td-muted">'+formatDate(f.date)+'</td>'+
-          '<td><div class="row-actions">'+
-            '<button class="btn btn-sm btn-ghost" data-edit="'+f.id+'">Modifier</button>'+
-            '<button class="btn btn-sm btn-danger" data-del="'+f.id+'">Supprimer</button>'+
-          '</div></td>';
-        body.appendChild(tr);
+      apiGet("/api/gains").then(function(rows){
+        var body = qs("#gainsTableBody");
+        body.innerHTML = "";
+        if(!rows.length){
+          body.innerHTML = '<tr><td colspan="6"><div class="empty-state">Aucun frais enregistré.</div></td></tr>';
+          return;
+        }
+        rows.forEach(function(f){
+          var typeStr = f.type_label || "";
+          var tr = document.createElement("tr");
+          tr.innerHTML =
+            '<td class="td-mono td-muted">#'+f.id+'</td>'+
+            '<td>'+(f.nom || "—")+' · '+(f.numero || "")+'</td>'+
+            '<td><span class="badge '+typeStr+'">'+(typeLabels[typeStr]||typeStr)+'</span></td>'+
+            '<td class="td-mono">'+formatAr(f.valeur)+'</td>'+
+            '<td class="td-muted">'+formatDate(f.date)+'</td>'+
+            '<td><div class="row-actions">'+
+              '<button class="btn btn-sm btn-ghost" data-edit="'+f.id+'" data-json=\''+JSON.stringify(f).replace(/'/g,"&#39;")+'\'>Modifier</button>'+
+              '<button class="btn btn-sm btn-danger" data-del="'+f.id+'">Supprimer</button>'+
+            '</div></td>';
+          body.appendChild(tr);
+        });
+      }).catch(function(err){
+        toast("Erreur de chargement des gains.", "error");
+        console.error(err);
       });
     }
-    render();
+
+    fillSelects().then(render);
 
     qs("#gainsTableBody").addEventListener("click", function(e){
       var editBtn = e.target.closest("[data-edit]");
       var delBtn  = e.target.closest("[data-del]");
+
       if(editBtn){
-        var f = db.fraisMvmt.find(function(x){ return x.id === Number(editBtn.dataset.edit); });
+        var f = JSON.parse(editBtn.dataset.json);
         qs("#editGainId").value = f.id;
         qs("#editGainType").value = f.typeOp;
         qs("#editGainMontant").value = f.valeur;
         qs("#editGainDate").value = f.date;
         openModal("modalEditGain");
       }
+
       if(delBtn){
         if(!confirm("Supprimer ce frais ?")) return;
-        var f2 = db.fraisMvmt.find(function(x){ return x.id === Number(delBtn.dataset.del); });
-        db.caisseOp[0].gains -= f2.valeur;
-        db.fraisMvmt = db.fraisMvmt.filter(function(x){ return x.id !== f2.id; });
-        saveDB(db); render();
-        toast("Frais supprimé.");
+        apiDelete("/api/gains/" + delBtn.dataset.del)
+          .then(function(){ render(); toast("Frais supprimé."); })
+          .catch(function(err){ toast("Erreur lors de la suppression.", "error"); console.error(err); });
       }
     });
 
     qs("#formAddGain").addEventListener("submit", function(e){
       e.preventDefault();
-      var idCompte = Number(qs("#addGainClient").value);
-      var idtypeOp = Number(qs("#addGainType").value);
-      var montant = Number(qs("#addGainMontantMvmt").value);
-      var date = qs("#addGainDate").value || todayISO();
-      var idType = (idtypeOp === 1) ? 1 : 2;
-
-      var mvmtId = nextId(db.mvmtCompte);
-      db.mvmtCompte.push({ id:mvmtId, idCompte:idCompte, valeur:montant, date:date, idType:idType, indTypeOp:idtypeOp });
-
-      var frais = computeFrais(db, idtypeOp, montant);
-      db.fraisMvmt.push({ id: nextId(db.fraisMvmt), idMvmtCompt: mvmtId, valeur: frais, typeOp: idtypeOp, date: date });
-      db.caisseOp[0].gains += frais;
-
-      saveDB(db); render();
-      e.target.reset();
-      closeModal("modalAddGain");
-      toast("Frais ajouté (calculé selon le barème : " + formatAr(frais) + ").");
+      var payload = {
+        idCompte: Number(qs("#addGainClient").value),
+        idtypeOp: Number(qs("#addGainType").value),
+        montant: Number(qs("#addGainMontantMvmt").value),
+        date: qs("#addGainDate").value || todayISO()
+      };
+      apiSend("/api/gains", "POST", payload)
+        .then(function(res){
+          render();
+          e.target.reset();
+          closeModal("modalAddGain");
+          toast("Frais ajouté (calculé selon le barème : " + formatAr(res.frais) + ").");
+        })
+        .catch(function(err){ toast("Erreur lors de l'ajout.", "error"); console.error(err); });
     });
 
     qs("#formEditGain").addEventListener("submit", function(e){
       e.preventDefault();
-      var f = db.fraisMvmt.find(function(x){ return x.id === Number(qs("#editGainId").value); });
-      db.caisseOp[0].gains -= f.valeur;
-      f.typeOp = Number(qs("#editGainType").value);
-      f.valeur = Number(qs("#editGainMontant").value);
-      f.date = qs("#editGainDate").value;
-      db.caisseOp[0].gains += f.valeur;
-      saveDB(db); render();
-      closeModal("modalEditGain");
-      toast("Frais modifié.");
+      var id = qs("#editGainId").value;
+      var payload = {
+        typeOp: Number(qs("#editGainType").value),
+        valeur: Number(qs("#editGainMontant").value),
+        date: qs("#editGainDate").value
+      };
+      apiSend("/api/gains/" + id, "POST", payload)
+        .then(function(){
+          render();
+          closeModal("modalEditGain");
+          toast("Frais modifié.");
+        })
+        .catch(function(err){ toast("Erreur lors de la modification.", "error"); console.error(err); });
     });
   }
 
-  /* ---------- 8.4 Situation des comptes ---------- */
+  /* ---------- 8.4 Situation des comptes (localStorage, ETU1944) ---------- */
   function initComptes(){
     var db = loadDB();
 
@@ -734,7 +776,7 @@
     renderRecent();
   }
 
-  /* ---------- 8.5 Détail client (admin) ---------- */
+  /* ---------- 8.5 Détail client admin (localStorage, ETU1944) ---------- */
   function initClientDetail(){
     var db = loadDB();
     var id = Number(new URLSearchParams(window.location.search).get("id"));
@@ -778,27 +820,51 @@
     }
   }
 
-  /* ---------- 8.6 Login client ---------- */
+  /* ---------- 8.6 Login client (API CI4, ETU4269) ---------- */
   function initClientLogin(){
-    var db = loadDB();
     var form = qs("#formClientLogin");
     form.addEventListener("submit", function(e){
       e.preventDefault();
       var numero = qs("#loginNumero").value.trim();
-      var c = db.compte.find(function(x){ return x.numero === numero; });
       var err = qs("#loginError");
-      if(!c){
-        err.textContent = "Aucun compte associé à ce numéro. Vérifiez et réessayez.";
-        err.classList.add("show");
-        return;
-      }
       err.classList.remove("show");
-      setClientSession(c.numero);
-      window.location.href = "dashboard.html";
+
+      apiSend("/api/auth/login", "POST", { numero: numero })
+        .then(function(res){
+          // Session serveur créée. On garde un miroir local pour les
+          // pages pas encore migrées (dashboard, historique local).
+          setClientSession(numero);
+
+          // On synchronise aussi le compte dans le localStorage local
+          // s'il n'existe pas encore (pour compat avec initClientDashboard).
+          var db = loadDB();
+          var exists = db.compte.find(function(c){ return c.numero === numero; });
+          if(!exists && res.compte){
+            db.compte.push({
+              id: res.compte.id,
+              numero: res.compte.numero,
+              nom: res.compte.nom,
+              soldeActuel: Number(res.compte.soldeActuel),
+              creation: res.compte.creation
+            });
+            saveDB(db);
+          } else if(exists && res.compte){
+            exists.soldeActuel = Number(res.compte.soldeActuel);
+            saveDB(db);
+          }
+
+          window.location.href = "dashboard.html";
+        })
+        .catch(function(errRes){
+          err.textContent = (errRes && errRes.messages && errRes.messages.error)
+            ? errRes.messages.error
+            : "Aucun compte associé à ce numéro. Vérifiez et réessayez.";
+          err.classList.add("show");
+        });
     });
   }
 
-  /* ---------- 8.7 Dashboard client ---------- */
+  /* ---------- 8.7 Dashboard client (localStorage, ETU1944) ---------- */
   function initClientDashboard(){
     var db = loadDB();
     var c = requireClient(db);
@@ -818,21 +884,39 @@
     renderMvmtTable(qs("#last10Body"), mouvements.slice(0,10), db);
   }
 
-  /* ---------- 8.8 Historique client ---------- */
+  /* ---------- 8.8 Historique client (API CI4, ETU4269) ---------- */
   function initClientHistorique(){
     var db = loadDB();
     var c = requireClient(db);
     if(!c) return;
 
-    var mouvements = db.mvmtCompte
-      .filter(function(m){ return m.idCompte === c.id; })
-      .sort(function(a,b){ return b.id - a.id; });
-
-    renderMvmtTable(qs("#fullHistoBody"), mouvements, db);
-
-    if(!mouvements.length){
-      qs("#fullHistoBody").innerHTML = '<tr><td colspan="4"><div class="empty-state">Aucune transaction pour le moment.</div></td></tr>';
-    }
+    apiGet("/api/historique/" + encodeURIComponent(c.numero))
+      .then(function(rows){
+        var body = qs("#fullHistoBody");
+        body.innerHTML = "";
+        if(!rows.length){
+          body.innerHTML = '<tr><td colspan="4"><div class="empty-state">Aucune transaction pour le moment.</div></td></tr>';
+          return;
+        }
+        rows.forEach(function(m){
+          var isIn = m.type_mvmt === "debit";
+          var tr = document.createElement("tr");
+          tr.innerHTML =
+            '<td><span class="badge '+m.type_op+'">'+opTypeLabel(m.type_op)+'</span></td>'+
+            '<td><div class="ledger '+(isIn?"in":"out")+'"><span class="amt">'+formatAr(m.valeur)+'</span></div></td>'+
+            '<td class="td-muted">'+formatDate(m.date)+'</td>'+
+            '<td class="td-muted">'+mvmtTypeLabel(m.type_mvmt)+'</td>';
+          body.appendChild(tr);
+        });
+      })
+      .catch(function(err){
+        // Fallback localStorage si l'API n'est pas encore prête
+        var mouvements = db.mvmtCompte
+          .filter(function(m){ return m.idCompte === c.id; })
+          .sort(function(a,b){ return b.id - a.id; });
+        renderMvmtTable(qs("#fullHistoBody"), mouvements, db);
+        console.warn("API historique indisponible, fallback localStorage.", err);
+      });
   }
 
   function renderMvmtTable(body, mouvements, db){
@@ -856,7 +940,7 @@
     });
   }
 
-  /* ---------- 8.9 Dépôt / Retrait ---------- */
+  /* ---------- 8.9 Dépôt (localStorage, ETU1944) / Retrait (API CI4, ETU4269) ---------- */
   function initOpForm(kind){
     var db = loadDB();
     var c = requireClient(db);
@@ -878,6 +962,37 @@
       previewTotal.textContent = formatAr(kind === "depot" ? montant : montant + frais);
     });
 
+    if(kind === "depot"){
+      // ----- Dépôt : reste en localStorage (module ETU1944) -----
+      form.addEventListener("submit", function(e){
+        e.preventDefault();
+        var montant = Number(input.value);
+        errBox.classList.remove("show");
+
+        if(!montant || montant <= 0){
+          errBox.textContent = "Indiquez un montant valide.";
+          errBox.classList.add("show");
+          return;
+        }
+        var frais = computeFrais(db, idtypeOp, montant);
+        var date = todayISO();
+        var mvmtId = nextId(db.mvmtCompte);
+        db.mvmtCompte.push({ id:mvmtId, idCompte:c.id, valeur:montant, date:date, idType:1, indTypeOp:idtypeOp });
+        db.fraisMvmt.push({ id: nextId(db.fraisMvmt), idMvmtCompt: mvmtId, valeur: frais, typeOp: idtypeOp, date: date });
+        db.caisseOp[0].gains += frais;
+        c.soldeActuel += montant;
+
+        saveDB(db);
+        toast("Dépôt effectué avec succès.");
+        form.reset();
+        previewFrais.textContent = formatAr(0);
+        previewTotal.textContent = formatAr(0);
+        qs("#formSoldeActuel").textContent = formatAr(c.soldeActuel);
+      });
+      return;
+    }
+
+    // ----- Retrait : appel API CI4 (module ETU4269) -----
     form.addEventListener("submit", function(e){
       e.preventDefault();
       var montant = Number(input.value);
@@ -888,34 +1003,29 @@
         errBox.classList.add("show");
         return;
       }
-      var frais = computeFrais(db, idtypeOp, montant);
 
-      if(kind === "retrait" && (montant + frais) > c.soldeActuel){
-        errBox.textContent = "Solde insuffisant pour ce retrait (frais inclus : " + formatAr(frais) + ").";
-        errBox.classList.add("show");
-        return;
-      }
+      apiSend("/api/retrait", "POST", { montant: montant })
+        .then(function(res){
+          // Synchronisation du solde local pour les pages non migrées.
+          c.soldeActuel = res.nouveauSolde;
+          saveDB(db);
 
-      var idType = kind === "depot" ? 1 : 2; // debit(entree) / credit(sortie)
-      var date = todayISO();
-      var mvmtId = nextId(db.mvmtCompte);
-      db.mvmtCompte.push({ id:mvmtId, idCompte:c.id, valeur:montant, date:date, idType:idType, indTypeOp:idtypeOp });
-      db.fraisMvmt.push({ id: nextId(db.fraisMvmt), idMvmtCompt: mvmtId, valeur: frais, typeOp: idtypeOp, date: date });
-      db.caisseOp[0].gains += frais;
-
-      if(kind === "depot") c.soldeActuel += montant;
-      else c.soldeActuel -= (montant + frais);
-
-      saveDB(db);
-      toast((kind === "depot" ? "Dépôt" : "Retrait") + " effectué avec succès.");
-      form.reset();
-      previewFrais.textContent = formatAr(0);
-      previewTotal.textContent = formatAr(0);
-      qs("#formSoldeActuel").textContent = formatAr(c.soldeActuel);
+          toast("Retrait effectué avec succès (frais : " + formatAr(res.frais) + ").");
+          form.reset();
+          previewFrais.textContent = formatAr(0);
+          previewTotal.textContent = formatAr(0);
+          qs("#formSoldeActuel").textContent = formatAr(c.soldeActuel);
+        })
+        .catch(function(errRes){
+          errBox.textContent = (errRes && errRes.messages && errRes.messages.error)
+            ? errRes.messages.error
+            : "Erreur lors du retrait. Vérifiez votre solde.";
+          errBox.classList.add("show");
+        });
     });
   }
 
-  /* ---------- 8.10 Transfert ---------- */
+  /* ---------- 8.10 Transfert (localStorage, ETU1944) ---------- */
   function initTransfert(){
     var db = loadDB();
     var c = requireClient(db);

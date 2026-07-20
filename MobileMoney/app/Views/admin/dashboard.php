@@ -10,11 +10,11 @@
 
   <header class="topbar">
     <div class="topbar-inner">
-      <a class="brand" href="dashboard.html"><span class="brand-mark">MM</span>Mobile Money<small>Espace opérateur</small></a>
+      <a class="brand" href="admin/dashboard"><span class="brand-mark">MM</span>Mobile Money<small>Espace opérateur</small></a>
       <nav class="nav-flow">
-        <a href="dashboard.html" class="active">Dashboard</a>
-        <a href="bareme.html">Barème des frais</a>
-        <a href="historique.html">Historique gains</a>
+        <a href="/admin/dashboard" class="active">Dashboard</a>
+        <a href="/api/bareme">Barème des frais</a>
+        <a href="/api/historique/(:segment)">Historique gains</a>
         <a href="comptes.html">Comptes clients</a>
         <span class="nav-sep"></span>
         <a href="../index.html" class="btn-logout">Déconnexion</a>

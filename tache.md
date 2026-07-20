@@ -70,8 +70,8 @@
 - [x] Intégration du template
 - [x] Création de la base de données
 - [x] Création des tables
-- [ ] Gestion du barème des frais
-- [ ] Suivi des gains de l'opérateur
+- [x] Gestion du barème des frais
+- [x] Suivi des gains de l'opérateur
 - [ ] Connexion automatique
 - [ ] Module de retrait
 - [ ] Historique des transactions

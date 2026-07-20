@@ -70,6 +70,8 @@ CREATE TABLE FraisMvmt (
         REFERENCES typeOperation(id)
 );
 
+ALTER TABLE compte ADD COLUMN nom VARCHAR(150) NOT NULL DEFAULT '';
+
 -- ==================================================================
 -- prefixeDispo :
 --   - int id;
