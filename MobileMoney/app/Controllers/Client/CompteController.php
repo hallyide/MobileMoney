@@ -104,7 +104,9 @@ class CompteController extends BaseController
                 'numeros' => $numeros,
             ]);
         } catch (DomainException $exception) {
-            return redirect()->back()->withInput()->with('erreur', $exception->getMessage());
+            return redirect()->to('/client/transfert')
+                ->withInput()
+                ->with('erreur', $exception->getMessage());
         }
     }
 

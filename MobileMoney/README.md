@@ -20,8 +20,8 @@ configuré. Lors de sa première connexion, son compte est créé automatiquemen
 
 La version 2 ajoute la gestion des opérateurs externes, de leurs préfixes et de
 leurs commissions. Un client peut envoyer un montant vers plusieurs numéros du
-même opérateur. Pour un opérateur externe, la commission est retirée du montant
-à reverser et aucun compte externe n'est créé dans l'application.
+même opérateur. Pour un opérateur externe, la commission est facturée à
+l'envoyeur sans réduire le montant à reverser. Aucun compte externe n'est créé.
 
 Pages opérateur ajoutées :
 

@@ -83,9 +83,9 @@
 ## Règles de gestion
 
 - Le solde des autres opérateurs n’est pas géré dans l’application.
-- La commission est retirée du montant envoyé vers un autre opérateur.
+- La commission est débitée sur le compte de l’envoyeur sans réduire le montant à reverser.
 - Aucun frais de retrait n’est appliqué pour un transfert vers un autre opérateur.
-- L’envoi multiple est autorisé uniquement vers des numéros du même opérateur.
+- L’envoi multiple est autorisé uniquement vers les numéros de notre opérateur.
 - Le montant total d’un envoi multiple est partagé entre les destinataires.
 
 ## 1. Base de données et données initiales
@@ -120,7 +120,7 @@
 |---|---|---|
 | ☑ | Détection de l’opérateur avec le préfixe du destinataire | **ETU1944** |
 | ☑ | Calcul de la commission en pourcentage | **ETU1944** |
-| ☑ | Déduction de la commission sur le montant envoyé | **ETU1944** |
+| ☑ | Débit de la commission sur le compte de l’envoyeur | **ETU1944** |
 | ☑ | Enregistrement du montant à envoyer à l’autre opérateur | **ETU1944** |
 | ☑ | Enregistrement du numéro destinataire | **ETU1944** |
 | ☑ | Ajout de la commission dans les gains de l’opérateur local | **ETU1944** |

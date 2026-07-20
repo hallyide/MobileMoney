@@ -25,7 +25,7 @@
         <div class="s-row"><span>Montant partagé</span><strong><?= number_format($resume['montantTotal'], 2, ',', ' ') ?> Ar</strong></div>
         <div class="s-row"><span>Frais de transfert</span><strong><?= number_format($resume['totalFraisTransfert'], 2, ',', ' ') ?> Ar</strong></div>
         <div class="s-row"><span>Frais de retrait inclus</span><strong><?= number_format($resume['totalFraisRetrait'], 2, ',', ' ') ?> Ar</strong></div>
-        <div class="s-row"><span>Commissions retenues</span><strong><?= number_format($resume['totalCommissions'], 2, ',', ' ') ?> Ar</strong></div>
+        <div class="s-row"><span>Commissions facturées</span><strong><?= number_format($resume['totalCommissions'], 2, ',', ' ') ?> Ar</strong></div>
         <div class="s-row"><span>Total débité</span><strong><?= number_format($resume['totalDebite'], 2, ',', ' ') ?> Ar</strong></div>
     </div>
 

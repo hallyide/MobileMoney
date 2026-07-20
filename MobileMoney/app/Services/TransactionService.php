@@ -35,7 +35,8 @@ class TransactionService
             $compteId,
             $montantNet,
             $this->idTypeMouvement('debit'),
-            $operationId
+            $operationId,
+            null
         );
         $this->enregistrerFrais($mouvementId, $operationId, $frais);
 
@@ -66,7 +67,8 @@ class TransactionService
             $compteId,
             $total,
             $this->idTypeMouvement('credit'),
-            $operationId
+            $operationId,
+            $compte['numero']
         );
         $this->enregistrerFrais($mouvementId, $operationId, $frais);
 
@@ -110,6 +112,13 @@ class TransactionService
 
         foreach ($numeros as $index => $numero) {
             $destination = $this->identifierDestination($numero, $expediteurId);
+
+            if (count($numeros) > 1 && $destination['type'] === 'externe') {
+                throw new DomainException(
+                    'L’envoi multiple est réservé aux numéros de notre opérateur.'
+                );
+            }
+
             $groupe = $destination['type'] === 'interne'
                 ? 'interne'
                 : 'externe-' . $destination['operateurId'];
@@ -134,10 +143,11 @@ class TransactionService
 
             if ($destination['type'] === 'externe') {
                 $commission = round($part * $destination['pourcentage'] / 100, 2);
-                $montantAReverser = round($part - $commission, 2);
+                $montantAReverser = $part;
             }
 
-            $debit = $part + $fraisTransfert + $fraisRetrait;
+            // Pour un envoi externe, la commission est payée par l'envoyeur.
+            $debit = $part + $fraisTransfert + $fraisRetrait + $commission;
             $totalDebite += $debit;
             $totalFraisTransfert += $fraisTransfert;
             $totalFraisRetrait += $fraisRetrait;
@@ -202,7 +212,8 @@ class TransactionService
                 $expediteurId,
                 $destination['debit'],
                 $typeSortie,
-                $operationId
+                $operationId,
+                $destination['numero']
             );
             $this->enregistrerFrais($mouvementId, $operationId, $destination['fraisTransfert']);
 
@@ -215,7 +226,8 @@ class TransactionService
                     $destination['compteId'],
                     $destination['montantRecu'],
                     $typeEntree,
-                    $operationId
+                    $operationId,
+                    $destination['numero']
                 );
             } else {
                 $this->db->table('transfertExterne')->insert([
@@ -365,13 +377,20 @@ class TransactionService
         return (float) $bareme['prix'];
     }
 
-    private function ajouterMouvement(int $compteId, float $valeur, int $typeId, int $operationId): int
+    private function ajouterMouvement(
+        int $compteId,
+        float $valeur,
+        int $typeId,
+        int $operationId,
+        ?string $numeroDestinataire
+    ): int
     {
         $this->db->table('mvmtCompte')->insert([
             'idCompte' => $compteId,
             'valeur' => round($valeur, 2),
             'idType' => $typeId,
             'indTypeOp' => $operationId,
+            'numeroDestinataire' => $numeroDestinataire,
         ]);
 
         return (int) $this->db->insertID();

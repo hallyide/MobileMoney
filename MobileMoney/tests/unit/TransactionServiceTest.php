@@ -36,6 +36,7 @@ class TransactionServiceTest extends TestCase
         $this->assertSame(0.0, $frais);
         $this->assertSame(11000.0, $this->solde(1));
         $this->assertSame(0.0, $this->dernierFrais());
+        $this->assertNull($this->dernierDestinataire(1));
     }
 
     public function testRetraitDeduitMontantEtFrais(): void
@@ -46,6 +47,7 @@ class TransactionServiceTest extends TestCase
         $this->assertSame(8900.0, $this->solde(1));
         $this->assertSame(1100.0, $this->dernierMouvement(1));
         $this->assertSame(100.0, $this->gains());
+        $this->assertSame('0320000001', $this->dernierDestinataire(1));
     }
 
     public function testTransfertMetAJourLesDeuxComptes(): void
@@ -57,6 +59,8 @@ class TransactionServiceTest extends TestCase
         $this->assertSame(2000.0, $this->solde(2));
         $this->assertSame(1050.0, $this->dernierMouvement(1));
         $this->assertSame(50.0, $this->gains());
+        $this->assertSame('0330000002', $this->dernierDestinataire(1));
+        $this->assertSame('0330000002', $this->dernierDestinataire(2));
     }
 
     public function testTransfertRefuseSiLeSoldeEstInsuffisant(): void
@@ -81,31 +85,44 @@ class TransactionServiceTest extends TestCase
         $this->assertSame(50.0, $this->gains());
     }
 
-    public function testTransfertExterneDeduitLaCommissionDuMontant(): void
+    public function testTransfertExterneFactureLaCommissionALenvoyeur(): void
     {
         $resume = $this->service->transfererMultiple(1, ['0310000003'], 1000, true);
         $externe = $this->db->table('transfertExterne')->get()->getRowArray();
 
         $this->assertSame('externe', $resume['type']);
-        $this->assertSame(1050.0, $resume['totalDebite']);
+        $this->assertSame(1150.0, $resume['totalDebite']);
         $this->assertSame(100.0, (float) $externe['commission']);
-        $this->assertSame(900.0, (float) $externe['montantAReverser']);
+        $this->assertSame(1000.0, (float) $externe['montantAReverser']);
         $this->assertSame(150.0, $this->gains());
         $this->assertSame(0.0, $resume['totalFraisRetrait']);
+        $this->assertSame('0310000003', $this->dernierDestinataire(1));
     }
 
     public function testEnvoiMultipleConserveLeMontantExact(): void
     {
         $resume = $this->service->transfererMultiple(
             1,
-            ['0310000003', '0310000004', '0310000005'],
+            ['0330000002', '0340000003', '0370000004'],
             1000,
             false
         );
 
         $parts = array_column($resume['destinataires'], 'part');
         $this->assertSame(1000.0, array_sum($parts));
-        $this->assertCount(3, $this->db->table('transfertExterne')->get()->getResultArray());
+        $this->assertSame('interne', $resume['type']);
+        $this->assertCount(0, $this->db->table('transfertExterne')->get()->getResultArray());
+    }
+
+    public function testEnvoiMultipleVersUnOperateurExterneEstRefuse(): void
+    {
+        $this->expectException(DomainException::class);
+        $this->service->preparerTransfert(
+            1,
+            ['0310000003', '0310000004'],
+            1000,
+            false
+        );
     }
 
     public function testEnvoiMultipleRefuseDeuxOperateursDifferents(): void
@@ -128,7 +145,8 @@ class TransactionServiceTest extends TestCase
         $commissionComplete = $this->service->preparerTransfert(1, ['0310000003'], 1000, false);
 
         $this->assertSame(1000.0, $commissionComplete['totalCommissions']);
-        $this->assertSame(0.0, $commissionComplete['totalAReverser']);
+        $this->assertSame(1000.0, $commissionComplete['totalAReverser']);
+        $this->assertSame(2050.0, $commissionComplete['totalDebite']);
     }
 
     public function testErreurDeValidationNeLaisseAucuneEcriture(): void
@@ -152,7 +170,7 @@ class TransactionServiceTest extends TestCase
             'CREATE TABLE typeMvmtComp (id INTEGER PRIMARY KEY, type TEXT NOT NULL UNIQUE)',
             'CREATE TABLE baremeFrais (id INTEGER PRIMARY KEY AUTOINCREMENT, idtypeOp INTEGER NOT NULL, montant_min REAL NOT NULL, montant_max REAL NOT NULL, prix REAL NOT NULL)',
             'CREATE TABLE compte (id INTEGER PRIMARY KEY, numero TEXT NOT NULL UNIQUE, soldeActuel REAL NOT NULL, creation DATE DEFAULT CURRENT_DATE)',
-            'CREATE TABLE mvmtCompte (id INTEGER PRIMARY KEY AUTOINCREMENT, idCompte INTEGER NOT NULL, valeur REAL NOT NULL, date DATE DEFAULT CURRENT_DATE, idType INTEGER NOT NULL, indTypeOp INTEGER NOT NULL)',
+            'CREATE TABLE mvmtCompte (id INTEGER PRIMARY KEY AUTOINCREMENT, idCompte INTEGER NOT NULL, valeur REAL NOT NULL, date DATE DEFAULT CURRENT_DATE, idType INTEGER NOT NULL, indTypeOp INTEGER NOT NULL, numeroDestinataire TEXT NULL)',
             'CREATE TABLE caisseOp (id INTEGER PRIMARY KEY, gains REAL NOT NULL DEFAULT 0)',
             'CREATE TABLE FraisMvmt (id INTEGER PRIMARY KEY AUTOINCREMENT, idMvmtCompt INTEGER NOT NULL, valeur REAL NOT NULL, typeOp INTEGER NOT NULL, date DATE DEFAULT CURRENT_DATE)',
             'CREATE TABLE prefixeDispo (id INTEGER PRIMARY KEY AUTOINCREMENT, prefixe TEXT NOT NULL UNIQUE)',
@@ -163,8 +181,8 @@ class TransactionServiceTest extends TestCase
             "INSERT INTO typeOperation VALUES (1, 'depot'), (2, 'retrait'), (3, 'transfert')",
             "INSERT INTO typeMvmtComp VALUES (1, 'debit'), (2, 'credit')",
             'INSERT INTO baremeFrais (idtypeOp, montant_min, montant_max, prix) VALUES (1, 100, 2000000, 0), (2, 100, 2000000, 100), (3, 100, 2000000, 50)',
-            "INSERT INTO compte (id, numero, soldeActuel) VALUES (1, '0320000001', 10000), (2, '0330000002', 1000)",
-            "INSERT INTO prefixeDispo (prefixe) VALUES ('032'), ('033')",
+            "INSERT INTO compte (id, numero, soldeActuel) VALUES (1, '0320000001', 10000), (2, '0330000002', 1000), (3, '0340000003', 1000), (4, '0370000004', 1000)",
+            "INSERT INTO prefixeDispo (prefixe) VALUES ('032'), ('033'), ('034'), ('037')",
             "INSERT INTO operateurExterne VALUES (1, 'Operateur 031'), (2, 'Operateur 035')",
             "INSERT INTO prefixeOperateur (idOperateur, prefixe) VALUES (1, '031'), (2, '035')",
             'INSERT INTO commissionOperateur (idOperateur, pourcentage) VALUES (1, 10), (2, 5)',
@@ -190,6 +208,12 @@ class TransactionServiceTest extends TestCase
     private function dernierFrais(): float
     {
         return (float) $this->db->table('FraisMvmt')->orderBy('id', 'DESC')->get()->getRow('valeur');
+    }
+
+    private function dernierDestinataire(int $compteId): ?string
+    {
+        return $this->db->table('mvmtCompte')->where('idCompte', $compteId)
+            ->orderBy('id', 'DESC')->get()->getRow('numeroDestinataire');
     }
 
     private function gains(): float

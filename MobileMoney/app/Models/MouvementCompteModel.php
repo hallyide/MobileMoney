@@ -9,7 +9,9 @@ class MouvementCompteModel extends Model
     protected $table = 'mvmtCompte';
     protected $primaryKey = 'id';
     protected $returnType = 'array';
-    protected $allowedFields = ['idCompte', 'valeur', 'date', 'idType', 'indTypeOp'];
+    protected $allowedFields = [
+        'idCompte', 'valeur', 'date', 'idType', 'indTypeOp', 'numeroDestinataire',
+    ];
 
     /** Retourne les mouvements avec des libelles lisibles. */
     public function forAccount(int $compteId, ?int $limit = null): array

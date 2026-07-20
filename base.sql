@@ -41,6 +41,7 @@ CREATE TABLE mvmtCompte (
     date DATE NOT NULL DEFAULT CURRENT_DATE,
     idType INTEGER NOT NULL,
     indTypeOp INTEGER NOT NULL,
+    numeroDestinataire TEXT NULL,
 
     FOREIGN KEY (idCompte)
         REFERENCES compte(id),
@@ -224,6 +225,7 @@ WHERE NOT EXISTS (
 --   - Date date;
 --   - int idType; (debit(entree) ou credit(sortie))
 --   - int indTypeOp;
+--   - VARCHAR numeroDestinataire; (NULL pour un depot)
 
 -- caisseOp :
 --   - int id;

@@ -11,7 +11,8 @@
         <div class="field">
             <label>Numéros destinataires</label>
             <div id="listeDestinataires">
-                <?php $anciensNumeros = session()->getOldInput('numeros') ?: ['']; ?>
+                <?php $anciensNumeros = old('numeros', [''], false); ?>
+                <?php $anciensNumeros = is_array($anciensNumeros) ? $anciensNumeros : ['']; ?>
                 <?php foreach ($anciensNumeros as $numero): ?>
                     <div class="field-row destinataire" style="margin-bottom:8px;">
                         <input class="input input-mono" name="numeros[]" value="<?= esc($numero) ?>" maxlength="10" pattern="[0-9]{10}" placeholder="ex : 0311234567" required>
@@ -20,7 +21,7 @@
                 <?php endforeach; ?>
             </div>
             <button class="btn btn-sm" id="ajouterDestinataire" type="button">+ Ajouter un numéro</button>
-            <span class="hint-sm">Tous les numéros doivent appartenir au même opérateur.</span>
+            <span class="hint-sm">L’envoi multiple est disponible uniquement vers les numéros de notre opérateur.</span>
         </div>
 
         <div class="field">
