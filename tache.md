@@ -76,10 +76,4 @@
 - **Terminées :** 16 / 18
 - **Restantes :** tag `v1` et livraison finale, après validation de l’application
 
-## Choix techniques après audit
 
-- Les données et les tableaux sont produits par PHP depuis SQLite.
-- JavaScript est limité aux modales, notifications, recherche locale et estimation visuelle des frais.
-- Toutes les opérations financières sont exécutées dans des transactions SQL.
-- Le client est identifié par la session ; aucun identifiant de compte sensible n’est placé dans l’URL.
-- `base.sql`, situé à la racine du dépôt, est l’unique script de création et de données initiales.
