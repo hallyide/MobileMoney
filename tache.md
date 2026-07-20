@@ -68,8 +68,8 @@
 
 ### ETU4269
 - [ ] Intégration du template
-- [ ] Création de la base de données
-- [ ] Création des tables
+- [x] Création de la base de données
+- [x] Création des tables
 - [ ] Gestion du barème des frais
 - [ ] Suivi des gains de l'opérateur
 - [ ] Connexion automatique
@@ -82,6 +82,6 @@
 ## Progression
 
 - **Total des tâches :** 18
-- **Terminées :** 1 / 18
+- **Terminées :** 3 / 18
 - **En cours :** 0
 - **Restantes :** 17
