@@ -1,9 +1,3 @@
-/**
- * Interactions visuelles communes.
- *
- * Les donnees, les calculs et le contenu des tableaux sont geres par PHP
- * et SQLite. Ce fichier ne contient volontairement aucune base simulee.
- */
 (function () {
     'use strict';
 

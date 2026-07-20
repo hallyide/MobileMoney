@@ -57,7 +57,7 @@
 - [x] Dépôt
 - [x] Transfert
 - [x] Tag Git v1 après validation
-- [ ] Livraison finale après validation
+- [x] Livraison finale après validation
 
 ### ETU4269
 
@@ -73,7 +73,7 @@
 ## Progression
 
 - **Total :** 18 tâches
-- **Terminées :** 16 / 18
+- **Terminées :** 18 / 18
 - **Restantes :** tag `v1` et livraison finale, après validation de l’application
 
 
