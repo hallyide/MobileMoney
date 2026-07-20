@@ -9,7 +9,7 @@
 <body class="theme-auth">
 
   <div class="auth-card" style="max-width:420px;">
-    <div class="auth-mark">F</div>
+    <div class="auth-mark">MM</div>
     <h1>Mobile Money</h1>
     <p class="sub">Plateforme de gestion des comptes et transactions</p>
 
@@ -17,8 +17,6 @@
       <a class="btn btn-primary btn-block" href="admin/dashboard.html">Espace Opérateur</a>
       <a class="btn btn-block" href="client/login.html">Espace Client</a>
     </div>
-
-    <p class="auth-foot">Modèle de démonstration — données simulées en local.</p>
   </div>
 
 </body>
