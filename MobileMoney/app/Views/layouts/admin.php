@@ -20,6 +20,10 @@
                class="<?= ($section ?? '') === 'baremes' ? 'active' : '' ?>">Barème des frais</a>
             <a href="<?= site_url('admin/gains') ?>"
                class="<?= ($section ?? '') === 'gains' ? 'active' : '' ?>">Gains</a>
+            <a href="<?= site_url('admin/operateurs') ?>"
+               class="<?= ($section ?? '') === 'operateurs' ? 'active' : '' ?>">Autres opérateurs</a>
+            <a href="<?= site_url('admin/versements') ?>"
+               class="<?= ($section ?? '') === 'versements' ? 'active' : '' ?>">Montants à envoyer</a>
             <a href="<?= site_url('admin/comptes') ?>"
                class="<?= ($section ?? '') === 'comptes' ? 'active' : '' ?>">Comptes clients</a>
             <span class="nav-sep"></span>

@@ -21,6 +21,15 @@ $routes->group('admin', static function (RouteCollection $routes): void {
     $routes->post('baremes/(:num)/supprimer', 'BaremeController::delete/$1');
 
     $routes->get('gains', 'GainsController::index');
+    $routes->get('operateurs', 'Admin\OperateurController::index');
+    $routes->post('operateurs', 'Admin\OperateurController::store');
+    $routes->post('operateurs/(:num)', 'Admin\OperateurController::update/$1');
+    $routes->post('operateurs/(:num)/supprimer', 'Admin\OperateurController::delete/$1');
+    $routes->post('operateurs/(:num)/prefixes', 'Admin\OperateurController::storePrefixe/$1');
+    $routes->post('prefixes-externes/(:num)', 'Admin\OperateurController::updatePrefixe/$1');
+    $routes->post('prefixes-externes/(:num)/supprimer', 'Admin\OperateurController::deletePrefixe/$1');
+    $routes->post('operateurs/(:num)/commission', 'Admin\OperateurController::updateCommission/$1');
+    $routes->get('versements', 'Admin\VersementController::index');
     $routes->get('comptes', 'Admin\CompteController::index');
     $routes->get('comptes/(:num)', 'Admin\CompteController::show/$1');
 });
@@ -35,6 +44,7 @@ $routes->get('client', 'Client\CompteController::index');
 $routes->get('client/depot', 'Client\CompteController::depotForm');
 $routes->post('client/depot', 'Client\CompteController::depot');
 $routes->get('client/transfert', 'Client\CompteController::transfertForm');
+$routes->post('client/transfert/apercu', 'Client\CompteController::transfertApercu');
 $routes->post('client/transfert', 'Client\CompteController::transfert');
 $routes->get('client/retrait', 'RetraitController::index');
 $routes->post('client/retrait', 'RetraitController::process');

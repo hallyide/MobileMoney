@@ -5,7 +5,7 @@ namespace App\Database\Seeds;
 use CodeIgniter\Database\Seeder;
 
 /**
- * Donnees necessaires pour tester la version 1.
+ * Donnees necessaires pour tester l'application.
  * Les tables doivent déjà avoir été créées avec le fichier base.sql.
  */
 class MobileMoneySeeder extends Seeder
@@ -40,6 +40,7 @@ class MobileMoneySeeder extends Seeder
 
         $this->db->query('INSERT OR IGNORE INTO caisseOp (id, gains) VALUES (1, 0)');
         $this->seedBaremes();
+        $this->seedOperateursExternes();
         $this->seedInitialMovements();
     }
 
@@ -115,6 +116,44 @@ class MobileMoneySeeder extends Seeder
                     'valeur' => $compte['soldeActuel'],
                     'idType' => $debit['id'],
                     'indTypeOp' => $depot['id'],
+                ]);
+            }
+        }
+    }
+
+    private function seedOperateursExternes(): void
+    {
+        $operateurs = [
+            ['nom' => 'Operateur 031', 'prefixe' => '031', 'pourcentage' => 5],
+            ['nom' => 'Operateur 035', 'prefixe' => '035', 'pourcentage' => 4],
+        ];
+
+        foreach ($operateurs as $donnees) {
+            $operateur = $this->db->table('operateurExterne')
+                ->where('nom', $donnees['nom'])->get()->getRowArray();
+
+            if ($operateur === null) {
+                $this->db->table('operateurExterne')->insert(['nom' => $donnees['nom']]);
+                $operateurId = (int) $this->db->insertID();
+            } else {
+                $operateurId = (int) $operateur['id'];
+            }
+
+            $prefixeExiste = $this->db->table('prefixeOperateur')
+                ->where('prefixe', $donnees['prefixe'])->countAllResults() > 0;
+            if (! $prefixeExiste) {
+                $this->db->table('prefixeOperateur')->insert([
+                    'idOperateur' => $operateurId,
+                    'prefixe' => $donnees['prefixe'],
+                ]);
+            }
+
+            $commissionExiste = $this->db->table('commissionOperateur')
+                ->where('idOperateur', $operateurId)->countAllResults() > 0;
+            if (! $commissionExiste) {
+                $this->db->table('commissionOperateur')->insert([
+                    'idOperateur' => $operateurId,
+                    'pourcentage' => $donnees['pourcentage'],
                 ]);
             }
         }

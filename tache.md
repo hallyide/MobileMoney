@@ -92,90 +92,90 @@
 
 | Statut | Tâche | Responsable |
 |---|---|---|
-| ☐ | Création de la table des autres opérateurs | **ETU1944** |
-| ☐ | Création de la table des préfixes des autres opérateurs | **ETU1944** |
-| ☐ | Création de la table des commissions par opérateur | **ETU1944** |
-| ☐ | Création de la table des transferts vers les autres opérateurs | **ETU1944** |
-| ☐ | Création des modèles correspondants | **ETU1944** |
-| ☐ | Ajout des opérateurs, préfixes et commissions de test dans le seeder | **ETU1944** |
-| ☐ | Tests de création de la base V2 avec `base.sql` | **ETU1944** |
+| ☑ | Création de la table des autres opérateurs | **ETU1944** |
+| ☑ | Création de la table des préfixes des autres opérateurs | **ETU1944** |
+| ☑ | Création de la table des commissions par opérateur | **ETU1944** |
+| ☑ | Création de la table des transferts vers les autres opérateurs | **ETU1944** |
+| ☑ | Création des modèles correspondants | **ETU1944** |
+| ☑ | Ajout des opérateurs, préfixes et commissions de test dans le seeder | **ETU1944** |
+| ☑ | Tests de création de la base V2 avec `base.sql` | **ETU1944** |
 
 ## 2. Back-office opérateur
 
 | Statut | Tâche | Responsable |
 |---|---|---|
-| ☐ | Liste des autres opérateurs | **ETU4269** |
-| ☐ | Ajout, modification et suppression d’un opérateur | **ETU4269** |
-| ☐ | Gestion des préfixes par opérateur | **ETU4269** |
-| ☐ | Configuration du pourcentage de commission par opérateur | **ETU4269** |
-| ☐ | Séparation des gains internes et des commissions externes | **ETU4269** |
-| ☐ | Affichage des montants à envoyer à chaque opérateur | **ETU4269** |
-| ☐ | Affichage du détail par numéro destinataire | **ETU4269** |
-| ☐ | Filtres par opérateur et par période | **ETU4269** |
-| ☐ | Tests des pages et formulaires opérateur | **ETU4269** |
+| ☑ | Liste des autres opérateurs | **ETU4269** |
+| ☑ | Ajout, modification et suppression d’un opérateur | **ETU4269** |
+| ☑ | Gestion des préfixes par opérateur | **ETU4269** |
+| ☑ | Configuration du pourcentage de commission par opérateur | **ETU4269** |
+| ☑ | Séparation des gains internes et des commissions externes | **ETU4269** |
+| ☑ | Affichage des montants à envoyer à chaque opérateur | **ETU4269** |
+| ☑ | Affichage du détail par numéro destinataire | **ETU4269** |
+| ☑ | Filtres par opérateur et par période | **ETU4269** |
+| ☑ | Tests des pages et formulaires opérateur | **ETU4269** |
 
 ## 3. Transferts vers les autres opérateurs
 
 | Statut | Tâche | Responsable |
 |---|---|---|
-| ☐ | Détection de l’opérateur avec le préfixe du destinataire | **ETU1944** |
-| ☐ | Calcul de la commission en pourcentage | **ETU1944** |
-| ☐ | Déduction de la commission sur le montant envoyé | **ETU1944** |
-| ☐ | Enregistrement du montant à envoyer à l’autre opérateur | **ETU1944** |
-| ☐ | Enregistrement du numéro destinataire | **ETU1944** |
-| ☐ | Ajout de la commission dans les gains de l’opérateur local | **ETU1944** |
-| ☐ | Débit du compte local sans création d’un compte externe | **ETU1944** |
-| ☐ | Conservation du transfert interne de la V1 | **ETU1944** |
-| ☐ | Gestion des erreurs et annulation complète de la transaction | **ETU1944** |
-| ☐ | Tests des transferts internes et externes | **ETU1944** |
+| ☑ | Détection de l’opérateur avec le préfixe du destinataire | **ETU1944** |
+| ☑ | Calcul de la commission en pourcentage | **ETU1944** |
+| ☑ | Déduction de la commission sur le montant envoyé | **ETU1944** |
+| ☑ | Enregistrement du montant à envoyer à l’autre opérateur | **ETU1944** |
+| ☑ | Enregistrement du numéro destinataire | **ETU1944** |
+| ☑ | Ajout de la commission dans les gains de l’opérateur local | **ETU1944** |
+| ☑ | Débit du compte local sans création d’un compte externe | **ETU1944** |
+| ☑ | Conservation du transfert interne de la V1 | **ETU1944** |
+| ☑ | Gestion des erreurs et annulation complète de la transaction | **ETU1944** |
+| ☑ | Tests des transferts internes et externes | **ETU1944** |
 
 ## 4. Application client
 
 | Statut | Tâche | Responsable |
 |---|---|---|
-| ☐ | Ajout de l’option « inclure les frais de retrait » | **ETU1944** |
-| ☐ | Application des frais de retrait pour un transfert interne | **ETU1944** |
-| ☐ | Suppression des frais de retrait pour un transfert externe | **ETU1944** |
-| ☐ | Ajout de plusieurs numéros destinataires | **ETU1944** |
-| ☐ | Vérification que les destinataires utilisent le même opérateur | **ETU1944** |
-| ☐ | Partage du montant total entre les destinataires | **ETU1944** |
-| ☐ | Gestion des arrondis lors du partage | **ETU1944** |
-| ☐ | Affichage du récapitulatif avant validation | **ETU1944** |
-| ☐ | Tests de l’envoi multiple | **ETU1944** |
+| ☑ | Ajout de l’option « inclure les frais de retrait » | **ETU1944** |
+| ☑ | Application des frais de retrait pour un transfert interne | **ETU1944** |
+| ☑ | Suppression des frais de retrait pour un transfert externe | **ETU1944** |
+| ☑ | Ajout de plusieurs numéros destinataires | **ETU1944** |
+| ☑ | Vérification que les destinataires utilisent le même opérateur | **ETU1944** |
+| ☑ | Partage du montant total entre les destinataires | **ETU1944** |
+| ☑ | Gestion des arrondis lors du partage | **ETU1944** |
+| ☑ | Affichage du récapitulatif avant validation | **ETU1944** |
+| ☑ | Tests de l’envoi multiple | **ETU1944** |
 
 ## 5. Finalisation et livraison
 
 | Statut | Tâche | Responsable |
 |---|---|---|
-| ☐ | Intégration des routes et des liens V2 | **ETU1944** |
-| ☐ | Tests globaux des versions 1 et 2 | **ETU1944** |
-| ☐ | Vérification des commissions, montants à envoyer et gains | **ETU1944** |
-| ☐ | Vérification de l’utilisation minimale de JavaScript | **ETU1944** |
-| ☐ | Mise à jour du README et du fichier des tâches | **ETU1944** |
-| ☐ | Création du tag Git **v2** | **ETU1944** |
+| ☑ | Intégration des routes et des liens V2 | **ETU1944** |
+| ☑ | Tests globaux des versions 1 et 2 | **ETU1944** |
+| ☑ | Vérification des commissions, montants à envoyer et gains | **ETU1944** |
+| ☑ | Vérification de l’utilisation minimale de JavaScript | **ETU1944** |
+| ☑ | Mise à jour du README et du fichier des tâches | **ETU1944** |
+| ☑ | Création du tag Git **v2** | **ETU1944** |
 | ☐ | Livraison finale de la version 2 | **ETU1944** |
 
 ## Répartition V2
 
 ### ETU1944
 
-- [ ] Tables, modèles et données initiales V2
-- [ ] Gestion des transferts internes et externes
-- [ ] Calcul et enregistrement des commissions
-- [ ] Option d’inclusion des frais de retrait
-- [ ] Envoi multiple vers le même opérateur
-- [ ] Tests métier et intégration finale
-- [ ] Tag Git v2 et livraison
+- [x] Tables, modèles et données initiales V2
+- [x] Gestion des transferts internes et externes
+- [x] Calcul et enregistrement des commissions
+- [x] Option d’inclusion des frais de retrait
+- [x] Envoi multiple vers le même opérateur
+- [x] Tests métier et intégration finale
+- [ ] Livraison finale sur la branche principale
 
 ### ETU4269
 
-- [ ] Gestion des autres opérateurs
-- [ ] Gestion des préfixes externes
-- [ ] Configuration des commissions
-- [ ] Séparation des gains
-- [ ] Situation des montants à envoyer
-- [ ] Détail par destinataire
-- [ ] Tests du back-office V2
+- [x] Gestion des autres opérateurs
+- [x] Gestion des préfixes externes
+- [x] Configuration des commissions
+- [x] Séparation des gains
+- [x] Situation des montants à envoyer
+- [x] Détail par destinataire
+- [x] Tests du back-office V2
 
 ## Organisation du merge
 
@@ -186,5 +186,5 @@
 ## Progression V2
 
 - **Total :** 42 tâches
-- **Terminées :** 0 / 42
-- **Restantes :** 42
+- **Terminées :** 41 / 42
+- **Restante :** livraison finale sur la branche principale
