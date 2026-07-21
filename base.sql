@@ -192,6 +192,17 @@ WHERE NOT EXISTS (
     SELECT 1 FROM mvmtCompte m WHERE m.idCompte = c.id
 );
 
+
+
+
+-- ==========================
+-- promo
+CREATE TABLE promo (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    pourcentage REAL NOT NULL DEFAULT 0 CHECK (pourcentage >= 0 AND pourcentage <= 100)
+);
+
+
 -- ==================================================================
 -- prefixeDispo :
 --   - int id;

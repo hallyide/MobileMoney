@@ -165,7 +165,7 @@
 - [x] Option d’inclusion des frais de retrait
 - [x] Envoi multiple vers le même opérateur
 - [x] Tests métier et intégration finale
-- [ ] Livraison finale sur la branche principale
+- [x] Livraison finale sur la branche principale
 
 ### ETU4269
 

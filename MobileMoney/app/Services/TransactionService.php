@@ -374,7 +374,15 @@ class TransactionService
             throw new DomainException('Aucun barème ne correspond au montant demandé.');
         }
 
-        return (float) $bareme['prix'];
+        $pourcent = [];
+        $pourcent['pourcentage'] = 0;
+
+        if ($operationId == 3) {
+            $pourcent = $this->db->table('promo')->where('id =', 1)->get()->getRowArray();
+        }
+
+        return (float) $bareme['prix']*(1-($pourcent['pourcentage']/100));
+        // return (float) $bareme['prix'];
     }
 
     private function ajouterMouvement(
