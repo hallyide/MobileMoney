@@ -49,3 +49,6 @@ $routes->post('client/transfert', 'Client\CompteController::transfert');
 $routes->get('client/retrait', 'RetraitController::index');
 $routes->post('client/retrait', 'RetraitController::process');
 $routes->get('client/historique', 'HistoriqueController::index');
+
+$routes->get('client/epargne', 'EpargneController::index');
+$routes->post('client/epargne', 'EpargneController::process');

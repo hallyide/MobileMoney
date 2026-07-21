@@ -22,6 +22,10 @@
                class="<?= ($section ?? '') === 'retrait' ? 'active' : '' ?>">Retrait</a>
             <a href="<?= site_url('client/transfert') ?>"
                class="<?= ($section ?? '') === 'transfert' ? 'active' : '' ?>">Transfert</a>
+            
+               <a href="<?= site_url('client/epargne') ?>"
+               class="<?= ($section ?? '') === 'epargne' ? 'active' : '' ?>">epargne</a> 
+               
             <a href="<?= site_url('client/historique') ?>"
                class="<?= ($section ?? '') === 'historique' ? 'active' : '' ?>">Historique</a>
             <span class="nav-sep"></span>

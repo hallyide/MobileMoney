@@ -192,6 +192,28 @@ WHERE NOT EXISTS (
     SELECT 1 FROM mvmtCompte m WHERE m.idCompte = c.id
 );
 
+=== ALEA 2
+CREATE TABLE soldeEpargne (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    idCompte INTEGER NOT NULL,
+    soldeEp REAL NOT NULL DEFAULT 0,
+
+    FOREIGN KEY (idCompte)
+        REFERENCES compte(id)
+);
+
+CREATE TABLE epargne (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    idCompte INTEGER NOT NULL,
+    pourcentage REAL NOT NULL DEFAULT 0 CHECK (pourcentage >= 0 AND pourcentage <= 100),
+
+    FOREIGN KEY (idCompte)
+        REFERENCES compte(id)
+);
+
+
+
+
 -- ==================================================================
 -- prefixeDispo :
 --   - int id;
